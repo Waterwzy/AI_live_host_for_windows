@@ -56,32 +56,7 @@ def set_process_volume(process_name, target_volume):
         except Exception as e:
             print(f"调整音量失败: {e}")
 
-'''qwen
-def deepseekreq(question):
-    # 启用流式输出（添加 stream=True）
-    payload= {
-        "model": "output",
-        "messages": question,
-        "max_tokens": 500,  # 限制响应的最大 token 数
-        "sampler_override": {
-            "frequency_penalty": 0.8,
-            #"penalty": 400, 
-            #"penalty_decay": 0.99654026,
-            "presence_penalty": 0.3,
-            "temperature": 1.4,
-            #"top_k": 128,
-            "top_p": 0.4,
-            "type": "Nucleus"
-        },
-        "stream": False
-    }
-    response = requests.post(
-        'http://firefly.ilty.top:11450/api/oai/chat/completions',
-        json=payload,
-        headers={"Authorization":f"Bearer 114","Content-Type": "application/json"},
-    )
-    return response
-'''
+
 def request_firefly(question):
     retry=0
     while retry<=config['llm_config']['llm_maxitry'] :
