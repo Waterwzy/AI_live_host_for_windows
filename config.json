@@ -96,7 +96,13 @@
         "tts_ref_audio_path":"/path/to/your/example.wav",
 
         "//_prompt_text":"关于tts语言的参考文本",
-        "tts_prompt_text":"your_prompt_text"
+        "tts_prompt_text":"your_prompt_text",
+
+        "//_timeout": "同上timeout",
+        "tts_timeout": 10,
+
+        "//_maxitry": "同上maxitry",
+        "tts_maxitry": 3
     },
 
     "//_live": "以下是直播主体的配置部分",

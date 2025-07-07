@@ -76,7 +76,7 @@ def deepseekreq(question):
         "stream": False
     }
     response = requests.post(
-        'http://firefly.ilty.top:11450/api/oai/chat/completions',
+        '我不到啊',
         json=payload,
         headers={"Authorization":f"Bearer 114","Content-Type": "application/json"},
     )
@@ -111,7 +111,7 @@ def window_topmmost(processing_name) :
 
     # 2. 设置窗口置顶
     win32gui.SetWindowPos(
-        hwnd, win32con.HWND_TOPMOST,
+        hwnd, win32con.HWND_TOP,
         0, 0, 0, 0,
         win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
     )
@@ -155,26 +155,33 @@ def TTS(text):
         "streaming_mode": False,
         "parallel_infer": True,
         "repetition_penalty": 1.35,
-        "frequency_penalty":0.5
+        "frequency_penalty":0.5,
+        "timeout":config['tts_config']['tts_timeout']
     }
-    response = requests.post(config['tts_config']['tts_baseurl'], json=payload)
-    if response.status_code == 200 and 'audio/wav' in response.headers.get('Content-Type', ''):
+    retry=0
+    while retry <= config['tts_config']['tts_maxitry'] :
         try:
-            # 将二进制数据加载到内存中的 BytesIO 对象
-            audio_data = BytesIO(response.content)
-            # 用 pydub 解析并播放
-            audio = AudioSegment.from_wav(audio_data)
-            output_string(text)
-            if config['beta_config']['beta_open_vts_emotion']:
-                window_topmmost(config['beta_config']['beta_vts_emotion_process'])
+            response = requests.post(config['tts_config']['tts_baseurl'], json=payload)
+            if response.status_code == 200 and 'audio/wav' in response.headers.get('Content-Type', ''):
+                    # 将二进制数据加载到内存中的 BytesIO 对象
+                    audio_data = BytesIO(response.content)
+                    # 用 pydub 解析并播放
+                    audio = AudioSegment.from_wav(audio_data)
+                    output_string(text)
+                    if config['beta_config']['beta_open_vts_emotion']:
+                        window_topmmost(config['beta_config']['beta_vts_emotion_process'])
 
-            play(audio)
+                    play(audio)
 
-            if config['beta_config']['beta_open_vts_emotion']:
-                window_topmmost(config['beta_config']['beta_vts_emotion_process'])
-
+                    if config['beta_config']['beta_open_vts_emotion']:
+                        window_topmmost(config['beta_config']['beta_vts_emotion_process'])
+                    return
         except Exception as e:
-            print(f"播放失败: ",e)
+            print("tts error:",e,"retrying...")
+            retry+=1
+    raise TimeoutError
+
+
 
 def output_string(text) :
     maxi=config['live_config']['live_max_len']
@@ -199,6 +206,11 @@ def output_string(text) :
         print( text[last_end : len(text) ] ,file=f )
     return
 
+def mode_change(mode) :
+    with open("logs\\mode.txt","w",encoding='utf-8') as f:
+        print("mode:"+mode,file=f)
+    return
+
 message = []
 def removecontext():
     global message
@@ -215,7 +227,7 @@ if __name__ == '__main__':
     removecontext()
     listnow=0
     sing_last_time=0
-
+    mode_change("chat（读取弹幕）")
     while True :
 
         try:
@@ -226,6 +238,7 @@ if __name__ == '__main__':
             continue
         #'''
         if sing_last_time==1:
+            mode_change("chat（读取弹幕）")
             listnow=len(slist)-1
             sing_last_time=0
         if slist[listnow].get("type",'0')=='0' :
@@ -235,6 +248,7 @@ if __name__ == '__main__':
             removecontext()
             print("removed!")
         elif slist[listnow].get('type','0')=='aising':
+            mode_change("singing（忽略弹幕消息）")
             if config['beta_config']['beta_open_sing_control']:
                 set_process_volume(config['beta_config']['beta_sing_control'],0)
             winsound.PlaySound("AI\\"+str(slist[listnow]['messages'])+".WAV", winsound.SND_FILENAME)
@@ -276,7 +290,10 @@ if __name__ == '__main__':
                 with open("logs\\text.json","w",encoding='utf-8') as f:
                     json.dump(message,f,ensure_ascii=False,indent=4)
                 #ansstr=ansstr[3:len(ansstr)]
-                TTS(ansstr)
+                try:
+                    TTS(ansstr)
+                except Exception as e:
+                    print("failed to tts")
                 if tokens_used>3000:
                     removecontext()
         listnow+=1
