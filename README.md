@@ -54,6 +54,7 @@
    - `livetext.txt`存储除弹幕外之前提到的所有监听到的消息，可以直接导入OBS。
 
    - `output.txt`存储语言模型的输出，可以直接导入OBS。
+   - `mode.txt`储存当前模式，分为`chat`和`singing`两种，可以直接导入OBS。
 
 3. **关于指令**
 

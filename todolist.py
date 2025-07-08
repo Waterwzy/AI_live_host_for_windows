@@ -3,14 +3,12 @@ from openai import OpenAI
 import json
 from time import sleep
 import reading_config
-import threading
-from multiprocessing.managers import BaseManager
 
 config=reading_config.read_config()
 
 sing_list=config['live_config']['live_sing_list']
 dmcount=[]
-
+#过滤器访问
 def requestds(question):
     retry=0
     while retry<= config['filter_config']['filter_maxitry'] :
@@ -30,7 +28,7 @@ def requestds(question):
             if 'client' :
                 client.close() 
     raise TimeoutError
-
+#command列表添加
 def add_list(command_type, msg, command_user, time):
     global processlist,raw_list,listnow,todo_list
     todo_list[listnow]['type']=command_type
@@ -44,7 +42,7 @@ def add_list(command_type, msg, command_user, time):
     return
 
 if __name__ == '__main__':
-
+    #同步启动子进程
     process_llm=subprocess.Popen(['python',"main_process.py"])
     process_ws=subprocess.Popen(['python',"ws.py"])
 
@@ -60,6 +58,7 @@ if __name__ == '__main__':
     with open("logs\\todo_raw.json","w",encoding='utf-8') as f:
         json.dump([],f,ensure_ascii=False,indent=4)
     while True:
+        #子进程异常关闭监测
         if process_ws.poll() is not None:
 
             print("ws停止，code：",process_ws.returncode,"restarting...")
@@ -81,7 +80,7 @@ if __name__ == '__main__':
             #print(len(raw_list))
             sleep(1)
             continue
-
+        #简单命令的处理（进入直播间，送礼，点赞，大航海）
         elif raw_list[processlist].get('cmd','null')=="LIVE_OPEN_PLATFORM_LIVE_ROOM_ENTER" :
             with open("logs\\livetext.txt",'a+',encoding='utf-8') as f:
                 print("欢迎 "+raw_list[processlist]['username']+" 喵",file=f)
@@ -104,14 +103,18 @@ if __name__ == '__main__':
                 gtype='舰长'
             with open('logs\\livetext.txt','a+',encoding='utf-8') as f:
                 print("谢谢 "+raw_list[processlist]['username'] + '的'+gtype+"\n谢谢老板老板大气喵")
-
+        #弹幕处理
         elif raw_list[processlist].get("cmd",'null')=='LIVE_OPEN_PLATFORM_DM':
+            #移除上下文，判定是否为房管或主播鉴权
             if raw_list[processlist].get('message','')=='remtext' and (raw_list[processlist].get('admin',0)==1 or raw_list[processlist].get("username",'unknown')==config['live_config']['live_upid']):
                 add_list('rem','','',0)
+            #开了点歌机，这里直接不做处理
             elif raw_list[processlist].get('message','')[0:3]=='点歌 ':
                 pass
+            #翻唱命令的添加
             elif raw_list[processlist].get('message','')[0:3]=='翻唱 ':
                 flag=0
+                #检查是否有翻唱命令权限
                 for user in dmcount:
                     if user['user'] == raw_list[processlist]['username'] and user['count'] >= config['live_config']['live_sing_count'] :
                         user['count'] -= 5
@@ -129,9 +132,12 @@ if __name__ == '__main__':
                         add_list('aising',sings['name'],'',0)
                         print("ai list added!")
                         break
+            #跳过命令
             elif raw_list[processlist].get('message','')[0]=='#' :
                 pass
+            #其他非命令弹幕
             else:
+                #筛选弹幕
                 while True:
                     try:
                         with open("logs\\text.json",'r',encoding='utf-8') as f:
@@ -149,8 +155,10 @@ if __name__ == '__main__':
                     print("Error:filter timed out,failed to process the danmaku.")
                     processlist+=1
                     continue
+                #适合回答process
                 if resp.choices[0].message.content=='process':
                     flag=0
+                    #添加有效弹幕
                     for user in dmcount :
                         if user['user']==raw_list[processlist]['username']:
                             flag=1

@@ -173,7 +173,7 @@ class BiliClient:
                 data_body = resp_data.get("data", {})
 
                 print(f"收到指令: {cmd}")
-
+                #针对不同命令的添加，对于相关命令不重要的字段直接省去
                 if cmd == "LIVE_OPEN_PLATFORM_DM" and data_body.get('dm_type',1)==0:
                     msg = data_body.get("msg", "")
                     uname = data_body.get("uname", "匿名用户")

@@ -34,6 +34,7 @@ def find_window_by_process_name(process_name):
     win32gui.EnumWindows(callback, hwnds)
     return hwnds[0] if hwnds else None
 
+#调整进程音量 beta功能
 def set_process_volume(process_name, target_volume):
     sessions = AudioUtilities.GetAllSessions()
     target_sessions = []
@@ -83,6 +84,7 @@ def deepseekreq(question):
     return response
 '''
 
+#llm的访问过程，兼容openai接口
 def request_firefly(question):
     retry=0
     while retry<=config['llm_config']['llm_maxitry'] :
@@ -103,6 +105,7 @@ def request_firefly(question):
                 client.close() 
     raise TimeoutError
 
+#窗口置顶+快捷键，一堆bug的功能
 def window_topmmost(processing_name) :
     # 1. 查找窗口
     hwnd = find_window_by_process_name(processing_name)
@@ -132,7 +135,7 @@ def window_topmmost(processing_name) :
         win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
     )
 
-
+#tts文件，兼具输出音频流和文本功能，payload可以自己改
 def TTS(text):
     payload = {
         "text": text,
@@ -183,7 +186,7 @@ def TTS(text):
     raise TimeoutError
 
 
-
+#用于一定长度文字换行的函数
 def output_string(text) :
     maxi=config['live_config']['live_max_len']
     nowlen=0
@@ -207,12 +210,14 @@ def output_string(text) :
         print( text[last_end : len(text) ] ,file=f )
     return
 
+#更改AI状态
 def mode_change(mode) :
     with open("logs\\mode.txt","w",encoding='utf-8') as f:
         print("mode:"+mode,file=f)
     return
 
 message = []
+#重置上下文
 def removecontext():
     global message
     #print(config['llm_config']['llm_prompt'])
@@ -230,7 +235,7 @@ if __name__ == '__main__':
     sing_last_time=0
     mode_change("chat（读取弹幕）")
     while True :
-
+        #读取命令
         try:
             with open("logs\\command.json",'r',encoding='utf-8') as f:
                 slist=json.load(f)
@@ -238,6 +243,7 @@ if __name__ == '__main__':
             print(e)
             continue
         #'''
+        #转换模式（翻唱结束）
         if sing_last_time==1:
             mode_change("chat（读取弹幕）")
             listnow=len(slist)-1
@@ -248,6 +254,7 @@ if __name__ == '__main__':
         elif slist[listnow].get('type','0')=='rem':
             removecontext()
             print("removed!")
+        #唱歌
         elif slist[listnow].get('type','0')=='aising':
             mode_change("singing（忽略弹幕消息）")
             if config['beta_config']['beta_open_sing_control']:
@@ -256,7 +263,9 @@ if __name__ == '__main__':
             if config['beta_config']['beta_open_sing_control']:
                 set_process_volume(config['beta_config']['beta_sing_control'],1)
             sing_last_time=1
+        #弹幕聊天
         elif slist[listnow].get("type",'0')=='DM':
+            #延迟判定
             if time.time()-slist[listnow].get("time",0) >= config['llm_config']['llm_maxidelay'] :
                 print("timeout!")
                 pass
