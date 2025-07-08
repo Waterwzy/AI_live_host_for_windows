@@ -227,10 +227,16 @@ def removecontext():
         json.dump(message,f,ensure_ascii=False,indent=4)
     return
 
+def write_text(text) :
+    with open("logs\\text.json","w",encoding='utf-8') as f:
+        json.dump(text,f,ensure_ascii=False,indent=4)
+    return
+
 if __name__ == '__main__':
     
     print("listening...")
     removecontext()
+    write_text(message)
     listnow=0
     sing_last_time=0
     mode_change("chat（读取弹幕）")
@@ -239,6 +245,12 @@ if __name__ == '__main__':
         try:
             with open("logs\\command.json",'r',encoding='utf-8') as f:
                 slist=json.load(f)
+        except Exception as e:
+            print(e)
+            continue
+        try:
+            with open("logs\\text.json",'r',encoding='utf-8') as f:
+                message=json.load(f)
         except Exception as e:
             print(e)
             continue
@@ -277,8 +289,27 @@ if __name__ == '__main__':
                     ans=request_firefly(message)#正常的request
                 except TimeoutError:
                     print("Error:llm timed out,failed to process the command.")
+                    if config['standby_llm_config']['standby_llm_open'] :
+                        print("启动备用模型...")
+                        mode_change("语言模型宕机，使用备用模型（无法语音转文字）")
+                        client=OpenAI(api_key=config["standby_llm_config"]['standby_llm_key'],base_url=config["standby_llm_config"]['standby_llm_baseurl'])
+                        standby_msg=copy.deepcopy(config['standby_llm_config']['standby_llm_prompt'])
+                        for content in message :
+                            standby_msg.append(content)
+                        response=client.chat.completions.create(
+                            model=config["standby_llm_config"]["standby_llm_model"],
+                            messages=standby_msg,
+                            stream=False
+                        )
+                        response=response.choices[0].message
+                        response=response.model_dump()
+                        response_add={"role":response['role'],"content":response['content']}
+                        standby_msg.append(response_add)
+                        output_string(response_add['content'])
+                        print(response_add['content'])
                     listnow+=1
                     continue
+                mode_change("chat（读取弹幕）")
                 tokens_used=ans.usage.total_tokens
                 print("tokens used:"+str(tokens_used))
                 ans=ans.choices[0].message
@@ -286,9 +317,11 @@ if __name__ == '__main__':
                 ans_add_dict={"role":ans_dict['role'],"content":ans_dict['content']}#简化字典结构
                 ansstr=ans.content
                 message.append(ans_add_dict)
+                '''
                 with open("logs\\historytext.txt","a+",encoding='utf-8') as f:
                     print("user:"+slist[listnow]['messages'],file=f)
                     print("assistant:"+ansstr,file=f)
+                '''
                 #print(message)
                 '''#使用qwen
                 ans=deepseekreq(message)
@@ -297,8 +330,7 @@ if __name__ == '__main__':
                 ansser=ans["choices"][0]["message"]["content"]
                 '''
                 print(ansstr)
-                with open("logs\\text.json","w",encoding='utf-8') as f:
-                    json.dump(message,f,ensure_ascii=False,indent=4)
+                write_text(message)
                 #ansstr=ansstr[3:len(ansstr)]
                 try:
                     TTS(ansstr)
