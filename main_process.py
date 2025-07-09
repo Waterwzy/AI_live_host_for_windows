@@ -294,7 +294,9 @@ if __name__ == '__main__':
                         mode_change("语言模型宕机，使用备用模型（无法语音转文字）")
                         client=OpenAI(api_key=config["standby_llm_config"]['standby_llm_key'],base_url=config["standby_llm_config"]['standby_llm_baseurl'])
                         standby_msg=copy.deepcopy(config['standby_llm_config']['standby_llm_prompt'])
-                        for content in message :
+                        for i,content in enumerate(message) :
+                            if i< len(config['llm_config']['llm_prompt']):
+                                continue
                             standby_msg.append(content)
                         response=client.chat.completions.create(
                             model=config["standby_llm_config"]["standby_llm_model"],
@@ -304,8 +306,9 @@ if __name__ == '__main__':
                         response=response.choices[0].message
                         response=response.model_dump()
                         response_add={"role":response['role'],"content":response['content']}
-                        standby_msg.append(response_add)
+                        message.append(response_add)
                         output_string(response_add['content'])
+                        write_text(message)
                         print(response_add['content'])
                     listnow+=1
                     continue
