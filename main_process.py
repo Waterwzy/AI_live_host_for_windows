@@ -339,6 +339,6 @@ if __name__ == '__main__':
                     TTS(ansstr)
                 except Exception as e:
                     print("failed to tts")
-                if tokens_used>3000:
+                if tokens_used>config['llm_config']["llm_maxitoken"]:
                     removecontext()
         listnow+=1
