@@ -125,7 +125,10 @@
         "tts_timeout": 10,
 
         "//_maxitry": "同上maxitry",
-        "tts_maxitry": 3
+        "tts_maxitry": 3,
+
+        "//_speed": "tts语速，默认1",
+        "tts_speed":1
     },
 
     "//_live": "以下是直播主体的配置部分",

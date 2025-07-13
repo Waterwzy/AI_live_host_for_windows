@@ -135,7 +135,7 @@ def window_topmmost(processing_name) :
         win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
     )
 
-#tts文件，兼具输出音频流和文本功能，payload可以自己改
+#tts函数，兼具输出音频流和文本功能，payload可以自己改
 def TTS(text):
     payload = {
         "text": text,
@@ -149,7 +149,7 @@ def TTS(text):
         "temperature": 1.3,
         "text_split_method": "cut5",
         "batch_size": 20,
-        "speed_factor": 0.85,
+        "speed_factor": config["tts_config"]['tts_speed'],
         "ref_text_free": False,
         "split_bucket": True,
         "fragment_interval": 0.3,
