@@ -1,4 +1,5 @@
 import subprocess
+import time
 from openai import OpenAI
 import json
 from time import sleep
@@ -41,6 +42,24 @@ def add_list(command_type, msg, command_user, time):
     listnow+=1
     return
 
+def legal_game_command(text):
+    if not 'A'<=text[0]<='J':
+        return False
+    if len(text) >=4 or len(text) <=1:
+        return False
+    if len(text) ==2 :
+        if '1'<=text[1]<='9':
+            return True
+        else :
+            return False
+    if len(text) ==3:
+        if text[1:3]=='10':
+            return True
+        else :
+            return False
+    return False
+
+
 if __name__ == '__main__':
     #同步启动子进程
     process_llm=subprocess.Popen(['python',"main_process.py"])
@@ -50,6 +69,11 @@ if __name__ == '__main__':
     listnow=0
     processlist=0
     todo_list=[]
+    game_list=[]
+
+    nowgame=0
+    game_user=''
+    game_command_last_time=0
     todo_list.append({"type":'0',"messages":'0',"user":"null"})
     prompt = '\n'.join(config['filter_config']['filter_prompt'])
     message=[{"role":"system","content":prompt},{}]
@@ -70,6 +94,12 @@ if __name__ == '__main__':
             process_llm=subprocess.Popen(['python',"main_process.py"])
         #'''
         try:
+            if process_game.poll() is not None:
+                print("game停止，游戏重置")
+                nowgame=False
+        except Exception :
+            pass
+        try:
             with open("logs\\todo_raw.json","r",encoding='utf-8') as f:
                 raw_list=json.load(f)
         except Exception as e :
@@ -80,6 +110,24 @@ if __name__ == '__main__':
             #print(len(raw_list))
             sleep(1)
             continue
+        #超时结束游戏
+        if nowgame :
+            if time.time()-game_command_last_time>config['beta_config']['beta_gamemode_timeout']:
+                nowgame=0
+                try:
+                    process_game.kill()
+                    print("game killed!")
+                except Exception as e :
+                    print("fail to kill the game!")
+        #输入游戏命令
+        if nowgame and raw_list[processlist].get('username')==game_user and legal_game_command(raw_list[processlist].get('message')):
+            print('game message get!')
+            text=raw_list[processlist].get('message')
+            game_dict={"cmd":"down","message":(ord(text[0])-ord('A')+1,int(text[1:]))}
+            game_list.append(game_dict)
+            with open("logs\\game.json","w",encoding='utf-8') as f:
+                json.dump(game_list,f,ensure_ascii=False,indent=4)
+            game_command_last_time=time.time()
         #简单命令的处理（进入直播间，送礼，点赞，大航海）
         elif raw_list[processlist].get('cmd','null')=="LIVE_OPEN_PLATFORM_LIVE_ROOM_ENTER" :
             with open("logs\\livetext.txt",'a+',encoding='utf-8') as f:
@@ -117,11 +165,11 @@ if __name__ == '__main__':
                 #检查是否有翻唱命令权限
                 for user in dmcount:
                     if user['user'] == raw_list[processlist]['username'] and user['count'] >= config['live_config']['live_sing_count'] :
-                        user['count'] -= 5
+                        user['count'] -= config['live_config']['live_sing_count']
                         flag = 1
                         break
                 #'''
-                if flag==0 :
+                if flag==0 and config['live_config']['live_sing_count']:
                     processlist += 1
                     continue
                 #'''
@@ -135,6 +183,34 @@ if __name__ == '__main__':
             #跳过命令
             elif raw_list[processlist].get('message','')[0]=='#' :
                 pass
+            #游戏代码集成
+            elif raw_list[processlist].get('message','') == "game" and config['beta_config']['beta_open_gamemode']:
+                #我不知道为什么鉴权要写这么长
+                if nowgame == 1 :
+                    processlist += 1
+                    continue
+                flag=0
+                for user in dmcount:
+                    if dmcount['user'] == raw_list[processlist]['username'] :
+                        if dmcount['count'] >= config['beta_config']['beta_gamemode_danmaku'] :
+                            dmcount["count"] -= config['beta_config']['beta_gamemode_danmaku']
+                            flag = 1
+                            break
+                if flag==0 and config['beta_config']['beta_gamemode_danmaku'] :
+                    processlist += 1
+                    continue
+                #开始游戏了
+                nowgame= True
+                game_user=raw_list[processlist]['username']
+                game_command_last_time=time.time()
+                game_list=[]
+                add_dict={'cmd':'start','message':game_user}
+                game_list.append(add_dict)
+                print("game start:\nplayer:",game_user)
+                with open("logs\\game.json", "w", encoding='utf-8') as f:
+                    json.dump(game_list, f, ensure_ascii=False, indent=4)
+                process_game=subprocess.Popen(['python',"game\\main.py"])
+
             #其他非命令弹幕
             else:
                 #筛选弹幕
@@ -172,4 +248,3 @@ if __name__ == '__main__':
                     print("pass")
                     #print(resp.choices[0].message.reasoning_content)#reasoner
         processlist+=1
-

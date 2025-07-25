@@ -173,6 +173,11 @@
                 ["ctrl","f10"],
                 ["ctrl","f11"],
                 ["ctrl","f12"]
-        ]
+        ],
+
+        "//_gamemode": "新增游戏模式，确保你有两个图片为firefly和player，并且像素为40*40，可以将生成的窗口推送至obs，目前就这一个游戏，不能改的.danmaku为启动游戏所需的有效弹幕数，timeout为无操作结束时间",
+        "beta_open_gamemode": 0,
+        "beta_gamemode_danmaku": 5,
+        "beta_gamemode_timeout": 20
     }
 }
