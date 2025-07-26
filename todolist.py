@@ -95,7 +95,7 @@ if __name__ == '__main__':
         #'''
         try:
             if process_game.poll() is not None:
-                print("game停止，游戏重置")
+                #print("game停止，游戏重置")
                 nowgame=False
         except Exception :
             pass

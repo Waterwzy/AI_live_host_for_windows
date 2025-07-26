@@ -193,7 +193,7 @@ def output_string(text) :
     last_end=0
     with open("logs\\output.txt","a+",encoding='utf-8') as f:
         for i,c in enumerate(text) :
-            if c == '\u3000' or '\u4e00' <= c <= '\u9fff' :
+            if  '\u3000'<=c<='\u303F' or '\u4e00' <= c <= '\u9fff' :
                 nowlen+=2
             else :
                 nowlen+=1
@@ -332,6 +332,7 @@ if __name__ == '__main__':
                 message.append(ans["choices"][0]["message"])
                 ansser=ans["choices"][0]["message"]["content"]
                 '''
+                ansstr = ansstr[3:] if ansstr.startswith("流萤:") else ansstr
                 print(ansstr)
                 write_text(message)
                 #ansstr=ansstr[3:len(ansstr)]

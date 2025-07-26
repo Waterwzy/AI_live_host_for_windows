@@ -12,7 +12,7 @@ size = (800,600)
 
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("game test")
-font = pygame.font.SysFont('microsoftyahei', 20)
+font = pygame.font.SysFont('FangSong', 30)
 
 board=np.empty((11,11),dtype=object)
 board_now=np.empty((11,11),dtype=object)
@@ -168,7 +168,7 @@ def read_command():
     #print('reading...')
     try:
 
-        with open("logs\\game.json","r") as f:
+        with open("logs\\game.json","r",encoding='utf-8') as f:
             return json.load(f)
     except Exception as e :
         print('error in read game text:',e)
@@ -233,7 +233,7 @@ while not done:
         screen.blit(text_ex,(250,20))
     for i in range(0,10):
         screen.blit(text_for_x[i],(20+(i+1)*50,560))
-        screen.blit(text_for_y[i], (0,20+(i+1)*50))
+        screen.blit(text_for_y[i], (20,20+(i+1)*50))
 
     for i in range (1,11) :
         for j in range(1,11) :
