@@ -106,10 +106,6 @@ if __name__ == '__main__':
             print("fail to read the raw!")
             sleep(1)
         #'''
-        if len(raw_list)<=processlist:
-            #print(len(raw_list))
-            sleep(1)
-            continue
         #超时结束游戏
         if nowgame :
             if time.time()-game_command_last_time>config['beta_config']['beta_gamemode_timeout']:
@@ -119,6 +115,11 @@ if __name__ == '__main__':
                     print("game killed!")
                 except Exception as e :
                     print("fail to kill the game!")
+        if len(raw_list)<=processlist:
+            #print(len(raw_list))
+            sleep(1)
+            continue
+
         #输入游戏命令
         if nowgame and raw_list[processlist].get('username')==game_user and legal_game_command(raw_list[processlist].get('message')):
             print('game message get!')
@@ -191,9 +192,9 @@ if __name__ == '__main__':
                     continue
                 flag=0
                 for user in dmcount:
-                    if dmcount['user'] == raw_list[processlist]['username'] :
-                        if dmcount['count'] >= config['beta_config']['beta_gamemode_danmaku'] :
-                            dmcount["count"] -= config['beta_config']['beta_gamemode_danmaku']
+                    if user['user'] == raw_list[processlist]['username'] :
+                        if user['count'] >= config['beta_config']['beta_gamemode_danmaku'] :
+                            user["count"] -= config['beta_config']['beta_gamemode_danmaku']
                             flag = 1
                             break
                 if flag==0 and config['beta_config']['beta_gamemode_danmaku'] :
