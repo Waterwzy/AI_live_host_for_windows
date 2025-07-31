@@ -41,23 +41,24 @@ def add_list(command_type, msg, command_user, time):
         json.dump(todo_list,f,ensure_ascii=False,indent=4)
     listnow+=1
     return
-
+#判断是否是合法的游戏指令
 def legal_game_command(text):
-    if not 'A'<=text[0]<='J':
-        return False
+    if not ('A'<=text[0]<='J' or 'a'<=text[0]<='j') :
+        return None
+    ordx=ord(text[0])-ord('A')+1 if 'A'<=text[0]<='J' else ord(text[0])-ord('a')+1
     if len(text) >=4 or len(text) <=1:
-        return False
+        return None
     if len(text) ==2 :
         if '1'<=text[1]<='9':
-            return True
+            return (ordx,int(text[1]))
         else :
-            return False
+            return None
     if len(text) ==3:
         if text[1:3]=='10':
-            return True
+            return (ordx,10)
         else :
-            return False
-    return False
+            return None
+    return None
 
 
 if __name__ == '__main__':
@@ -121,10 +122,10 @@ if __name__ == '__main__':
             continue
 
         #输入游戏命令
-        if nowgame and raw_list[processlist].get('username')==game_user and legal_game_command(raw_list[processlist].get('message')):
+        if nowgame and raw_list[processlist].get('username')==game_user and (legal_game_command(raw_list[processlist].get('message')) is not None):
             print('game message get!')
             text=raw_list[processlist].get('message')
-            game_dict={"cmd":"down","message":(ord(text[0])-ord('A')+1,int(text[1:]))}
+            game_dict={"cmd":"down","message":legal_game_command(text)}
             game_list.append(game_dict)
             with open("logs\\game.json","w",encoding='utf-8') as f:
                 json.dump(game_list,f,ensure_ascii=False,indent=4)
