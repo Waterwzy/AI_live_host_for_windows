@@ -4,7 +4,7 @@ import json
 from openai import OpenAI
 from pydub import AudioSegment
 from pydub.playback import play
-from io import BytesIO
+import os
 import random
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 import winsound
@@ -167,19 +167,29 @@ def TTS(text):
         try:
             response = requests.post(config['tts_config']['tts_baseurl'], json=payload)
             if response.status_code == 200 and 'audio/wav' in response.headers.get('Content-Type', ''):
-                    # 将二进制数据加载到内存中的 BytesIO 对象
-                    audio_data = BytesIO(response.content)
-                    # 用 pydub 解析并播放
-                    audio = AudioSegment.from_wav(audio_data)
-                    output_string(text)
-                    if config['beta_config']['beta_open_vts_emotion']:
-                        window_topmmost(config['beta_config']['beta_vts_emotion_process'])
+                # 创建自定义临时目录
+                temp_dir = os.path.join(os.getcwd(), "tts_temp")
+                os.makedirs(temp_dir, exist_ok=True)
 
-                    play(audio)
+                # 生成唯一文件名
+                timestamp = int(time.time() * 1000)
+                temp_file = os.path.join(temp_dir, f"tts_{timestamp}.wav")
 
-                    if config['beta_config']['beta_open_vts_emotion']:
-                        window_topmmost(config['beta_config']['beta_vts_emotion_process'])
-                    return
+                # 写入文件
+                with open(temp_file, "wb") as f:
+                    f.write(response.content)
+                audio = AudioSegment.from_wav(temp_file)
+                if config['beta_config']['beta_open_vts_emotion']:
+                    window_topmmost(config['beta_config']['beta_vts_emotion_process'])
+
+                winsound.PlaySound(temp_file, winsound.SND_FILENAME)
+                try:
+                    os.remove(temp_file)
+                except Exception as e:
+                    print(f"删除临时文件失败: {e}")
+                if config['beta_config']['beta_open_vts_emotion']:
+                    window_topmmost(config['beta_config']['beta_vts_emotion_process'])
+                return
         except Exception as e:
             print("tts error:",e,"retrying...")
             retry+=1
