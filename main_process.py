@@ -137,6 +137,7 @@ def window_topmmost(processing_name) :
 
 #tts函数，兼具输出音频流和文本功能，payload可以自己改
 def TTS(text):
+    #mytime=0
     payload = {
         "text": text,
         "text_lang": "zh",
@@ -181,7 +182,8 @@ def TTS(text):
                 audio = AudioSegment.from_wav(temp_file)
                 if config['beta_config']['beta_open_vts_emotion']:
                     window_topmmost(config['beta_config']['beta_vts_emotion_process'])
-
+                    #mytime=time.time()
+                output_string(text)
                 winsound.PlaySound(temp_file, winsound.SND_FILENAME)
                 try:
                     os.remove(temp_file)
@@ -293,10 +295,13 @@ if __name__ == '__main__':
                 pass
             else:
                 message.append({"role":"user","content":slist[listnow].get("user","匿名")+':'+slist[listnow].get("messages",'你好流萤')})
+                #llm_time=0
+                #tts_time=0
                 #print("post request...")
                 #print(message)
                 try:
                     ans=request_firefly(message)#正常的request
+                    #llm_time=time.time()
                 except TimeoutError:
                     print("Error:llm timed out,failed to process the command.")
                     if config['standby_llm_config']['standby_llm_open'] :
@@ -350,6 +355,7 @@ if __name__ == '__main__':
                     TTS(ansstr)
                 except Exception as e:
                     print("failed to tts")
+                #print("delay:",tts_time-slist[listnow]['time'],"\ndeepseek api delay:",slist[listnow]['process_time']-slist[listnow]['time'],"\nllm delay:",llm_time-slist[listnow]['process_time'],"\ntts delay:",tts_time-llm_time)
                 if tokens_used>config['llm_config']["llm_maxitoken"]:
                     removecontext()
         listnow+=1
