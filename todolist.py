@@ -9,7 +9,7 @@ import reading_config
 config = reading_config.read_config()
 
 sing_list = config['live_config']['live_sing_list']
-dmcount = []
+dmcount = []#key:user,count
 
 
 # 异步过滤器访问
@@ -75,6 +75,16 @@ def legal_game_command(text):
             return None
     return None
 
+def not_legal_command(mode,username,need_command):
+    global dmcount
+    for user in dmcount:
+        if user['user'] == username:
+            with open('logs\\livetext.txt', 'a+', encoding='utf-8') as f:
+                print(username+mode+'弹幕数量不够喵，还需要'+str(need_command-user['count']),file=f)
+                return  None
+    with open('logs\\livetext.txt', 'a+', encoding='utf-8') as f:
+        print(username+mode+'弹幕数量不够喵，还需要'+str(need_command),file=f)
+    return None
 
 async def main():
     global processlist, raw_list, listnow, todo_list
@@ -189,6 +199,7 @@ async def main():
                             break
                     if flag == 0 and config['live_config']['live_sing_count']:
                         processlist += 1
+                        not_legal_command('翻唱',username,config['live_config']['live_sing_count'])
                         continue
                     # 添加翻唱请求
                     for sings in sing_list:
@@ -221,6 +232,7 @@ async def main():
                                 break
                     if flag == 0 and config['beta_config']['beta_gamemode_danmaku']:
                         processlist += 1
+                        not_legal_command('游戏',username,config['beta_config']['beta_gamemode_danmaku'])
                         continue
                     # 开始游戏了
                     nowgame = True
