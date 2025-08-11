@@ -211,12 +211,7 @@ async def main():
                     pass
                 # 点歌命令
                 elif message_content.startswith("点歌 "):
-                    singname = message_content[3:]
-                    for sings in sing_list:
-                        if singname == str(sings['num']) or singname == sings['name']:
-                            add_list('song', sings['name'], username, time.time())
-                            print(f"点歌请求已添加：{sings['name']}")
-                            break
+                    pass
                 # 游戏代码集成
                 elif raw_list[processlist].get('message', '') == "game" and config['beta_config']['beta_open_gamemode']:
                     # 我不知道为什么鉴权要写这么长
