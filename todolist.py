@@ -15,7 +15,7 @@ dmcount = []#key:user,count
 # 异步过滤器访问
 async def requestds(session, question):
     retry = 0
-    while retry <= config['filter_config']['filter_maxitry']:
+    while retry < config['filter_config']['filter_maxitry']:
         try:
             headers = {
                 "Authorization": f"Bearer {config['filter_config']['filter_key']}",  # 使用 Bearer Token

@@ -85,24 +85,32 @@ def deepseekreq(question):
 '''
 
 #llm的访问过程，兼容openai接口
-def request_firefly(question):
+def request_firefly(question,headless,nickname):
     retry=0
-    while retry<=config['llm_config']['llm_maxitry'] :
-        client = OpenAI(api_key=config['llm_config']['llm_key'], base_url=config['llm_config']['llm_baseurl'])
+    message= question if headless else [{"role":"user","content":[{"type":"text","text":question[len(question)-1]['content'][len(nickname)+1:]}]}]
+    addtional_dict={} if headless else {"nickname":nickname,"session_id":"live-stream","headless":headless}
+    payload={
+        "model":config['llm_config']['llm_model'],
+        "messages":message,
+        "stream":False,
+    }
+    payload.update(addtional_dict)
+    headers = {
+        "Authorization":f"Bearer {config['llm_config']['llm_key']}",
+        "Content-Type": "application/json"
+    }
+    while retry < config['llm_config']['llm_maxitry'] :
         try :
-            response = client.chat.completions.create(
-                model=config['llm_config']['llm_model'],
-                messages=question,
-                stream=False,
-                timeout=config['llm_config']['llm_timeout'],
+            response = requests.post(
+                url=f"{config['llm_config']['llm_baseurl']}/v1/chat/completions",
+                json=payload,
+                headers=headers,
+                timeout=config['llm_config']['llm_timeout']
             )
-            return response
+            return response.json()
         except Exception as e:
             print("Error in llm:",e," retrying...")
             retry+=1
-        finally:
-            if 'client' :
-                client.close() 
     raise TimeoutError
 
 #窗口置顶+快捷键，一堆bug的功能
@@ -294,13 +302,13 @@ if __name__ == '__main__':
                 print("timeout!")
                 pass
             else:
-                message.append({"role":"user","content":slist[listnow].get("user","匿名")+':'+slist[listnow].get("messages",'你好流萤')})
+                message.append({"role":"user","content":[{"type":"text","text":slist[listnow].get("user","匿名")+':'+slist[listnow].get("messages",'你好流萤')}]})
                 #llm_time=0
                 #tts_time=0
                 #print("post request...")
                 #print(message)
                 try:
-                    ans=request_firefly(message)#正常的request
+                    ans=request_firefly(message,config['llm_config']['llm_headless'],slist[listnow].get("user","匿名"))#正常的request
                     #llm_time=time.time()
                 except TimeoutError:
                     print("Error:llm timed out,failed to process the command.")
@@ -328,13 +336,14 @@ if __name__ == '__main__':
                     listnow+=1
                     continue
                 mode_change("chat（读取弹幕）")
-                tokens_used=ans.usage.total_tokens
+                print(ans)
+                #'''
+                tokens_used=ans['usage']['total_tokens']
                 print("tokens used:"+str(tokens_used))
-                ans=ans.choices[0].message
-                ans_dict=ans.model_dump()
-                ans_add_dict={"role":ans_dict['role'],"content":ans_dict['content']}#简化字典结构
-                ansstr=ans.content
-                message.append(ans_add_dict)
+                ans=ans['choices'][0]['message']
+                ansstr=ans['content']
+                message.append(ans)
+                #'''
                 '''
                 with open("logs\\historytext.txt","a+",encoding='utf-8') as f:
                     print("user:"+slist[listnow]['messages'],file=f)
@@ -347,6 +356,7 @@ if __name__ == '__main__':
                 message.append(ans["choices"][0]["message"])
                 ansser=ans["choices"][0]["message"]["content"]
                 '''
+                #'''
                 ansstr = ansstr[3:] if ansstr.startswith("流萤:") else ansstr
                 print(ansstr)
                 write_text(message)
@@ -358,4 +368,5 @@ if __name__ == '__main__':
                 #print("delay:",tts_time-slist[listnow]['time'],"\ndeepseek api delay:",slist[listnow]['process_time']-slist[listnow]['time'],"\nllm delay:",llm_time-slist[listnow]['process_time'],"\ntts delay:",tts_time-llm_time)
                 if tokens_used>config['llm_config']["llm_maxitoken"]:
                     removecontext()
+                #'''
         listnow+=1
