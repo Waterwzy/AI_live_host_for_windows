@@ -1,38 +1,20 @@
-import pyautogui
 import requests
 import json
 from openai import OpenAI
 from pydub import AudioSegment
 from pydub.playback import play
 import os
-import random
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 import winsound
 from psutil import NoSuchProcess, AccessDenied
 import time
-import win32gui
-import win32con
-import win32process
 import psutil
 import copy
 import reading_config
+import vts_emotion
+import asyncio
 
 config=reading_config.read_config()
-
-
-
-def find_window_by_process_name(process_name):
-    """通过进程名查找窗口句柄"""
-    def callback(hwnd, hwnds):
-        if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd):
-            _, pid = win32process.GetWindowThreadProcessId(hwnd)
-            if psutil.Process(pid).name() == process_name:
-                hwnds.append(hwnd)
-        return True
-    
-    hwnds = []
-    win32gui.EnumWindows(callback, hwnds)
-    return hwnds[0] if hwnds else None
 
 #调整进程音量 beta功能
 def set_process_volume(process_name, target_volume):
@@ -88,11 +70,12 @@ def deepseekreq(question):
 def request_firefly(question,headless,nickname):
     retry=0
     message= question if headless else [{"role":"user","content":[{"type":"text","text":question[len(question)-1]['content'][len(nickname)+1:]}]}]
-    addtional_dict={} if headless else {"nickname":nickname,"session_id":"live-stream","headless":headless}
+    addtional_dict={} if headless else {"nickname":nickname,"session_id":"live-stream"}
     payload={
         "model":config['llm_config']['llm_model'],
         "messages":message,
         "stream":False,
+        "headless":headless,
     }
     payload.update(addtional_dict)
     headers = {
@@ -107,41 +90,14 @@ def request_firefly(question,headless,nickname):
                 headers=headers,
                 timeout=config['llm_config']['llm_timeout']
             )
-            return response.json()
+            if response.status_code == 200:
+                return response.json()
+            else :
+                raise Exception(f"HTTP error: {response.status}")
         except Exception as e:
             print("Error in llm:",e," retrying...")
             retry+=1
     raise TimeoutError
-
-#窗口置顶+快捷键，一堆bug的功能
-def window_topmmost(processing_name) :
-    # 1. 查找窗口
-    hwnd = find_window_by_process_name(processing_name)
-    if not hwnd:
-        print(f"找不到进程 {processing_name} 的窗口")
-        return
-
-    # 2. 设置窗口置顶
-    win32gui.SetWindowPos(
-        hwnd, win32con.HWND_TOP,
-        0, 0, 0, 0,
-        win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
-    )
-
-    
-    # 3. 执行你的操作
-    ran=random.randint(0,len( config['beta_config']['beta_vts_emotion_keys'] ) -1 )
-    for i in range(len(config['beta_config']['beta_vts_emotion_keys'][ran])):
-        pyautogui.keyDown(config['beta_config']['beta_vts_emotion_keys'][ran][i])
-    for i in range(len(config['beta_config']['beta_vts_emotion_keys'][ran])):
-        pyautogui.keyUp(config['beta_config']['beta_vts_emotion_keys'][ran][i])
-
-    # 4. 直接回位到最底部
-    win32gui.SetWindowPos(
-        hwnd, win32con.HWND_BOTTOM,
-        0, 0, 0, 0,
-        win32con.SWP_NOMOVE | win32con.SWP_NOSIZE
-    )
 
 #tts函数，兼具输出音频流和文本功能，payload可以自己改
 def TTS(text):
@@ -189,8 +145,7 @@ def TTS(text):
                     f.write(response.content)
                 audio = AudioSegment.from_wav(temp_file)
                 if config['beta_config']['beta_open_vts_emotion']:
-                    window_topmmost(config['beta_config']['beta_vts_emotion_process'])
-                    #mytime=time.time()
+                    asyncio.run(vts_emotion.emotion_main())
                 output_string(text)
                 winsound.PlaySound(temp_file, winsound.SND_FILENAME)
                 try:
@@ -198,7 +153,7 @@ def TTS(text):
                 except Exception as e:
                     print(f"删除临时文件失败: {e}")
                 if config['beta_config']['beta_open_vts_emotion']:
-                    window_topmmost(config['beta_config']['beta_vts_emotion_process'])
+                    asyncio.run(vts_emotion.emotion_main())
                 return
         except Exception as e:
             print("tts error:",e,"retrying...")

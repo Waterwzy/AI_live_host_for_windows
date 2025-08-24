@@ -158,30 +158,15 @@
 
     "beta_config": {
         "//_sing_control": "控制外源点歌机的开关，当翻唱命令执行时自动关闭外源点歌机，下面的参数输入点歌机进程名（注意：这个功能不能使点歌机暂停点歌，只能关闭其声音）",
-        "beta_open_sing_control": 0,
+        "beta_open_sing_control": 1,
         "beta_sing_control": "DanmuMusic.exe",
 
-        "//_vts_emotion": "控制vts表情的开关，当AI说话开始/结束时做一个表情，需要在下面填写vts进程名和表情快捷键列表（表情触发结束后会将vts窗口放到最底部）",
-        "beta_open_vts_emotion": 0,
-        "beta_vts_emotion_process": "VTube Studio.exe",
-        "beta_vts_emotion_keys": [
-                ["ctrl","f1"],
-                ["ctrl","f2"],
-                ["ctrl","f3"],
-                ["ctrl","f4"],
-                ["ctrl","f5"],
-                ["ctrl","f6"],
-                ["ctrl","f7"],
-                ["ctrl","f8"],
-                ["ctrl","f9"],
-                ["ctrl","f10"],
-                ["ctrl","f11"],
-                ["ctrl","f12"]
-        ],
+        "//_vts_emotion": "控制vts表情的开关，当AI说话开始/结束时做一个表情，已接入vtsapi，可自动随机触发一个表情（打开vts后的首次使用需要同意api插件接入）",
+        "beta_open_vts_emotion": 1,
 
         "//_gamemode": "新增游戏模式，确保你有两个图片为firefly和player，并且像素为40*40，可以将生成的窗口推送至obs，目前就这一个游戏，不能改的.danmaku为启动游戏所需的有效弹幕数，timeout为无操作结束时间",
-        "beta_open_gamemode": 0,
+        "beta_open_gamemode": 1,
         "beta_gamemode_danmaku": 5,
-        "beta_gamemode_timeout": 20
+        "beta_gamemode_timeout": 60
     }
 }
