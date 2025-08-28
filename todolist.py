@@ -5,6 +5,7 @@ import aiohttp
 import json
 from time import sleep
 import reading_config
+from vts_emotion import emotion_init
 
 config = reading_config.read_config()
 
@@ -107,6 +108,8 @@ async def main():
         json.dump(todo_list, f, ensure_ascii=False, indent=4)
     with open("logs\\todo_raw.json", "w", encoding='utf-8') as f:
         json.dump([], f, ensure_ascii=False, indent=4)
+
+    await emotion_init()
 
     async with aiohttp.ClientSession() as session:
         while True:

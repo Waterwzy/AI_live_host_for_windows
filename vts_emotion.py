@@ -19,3 +19,13 @@ async def emotion_main():
         await vts.close()
     except Exception as e:
         print("error in vts emotion:",e)
+async def emotion_init():
+    try:
+        vts=pyvts.vts()
+        await vts.connect()
+        await vts.request_authenticate_token()
+        await vts.request_authenticate()
+        await vts.close()
+        print("successfully connected to vts!")
+    except Exception as e:
+        print("error in init vts :",e)

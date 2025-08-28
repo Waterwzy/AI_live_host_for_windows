@@ -6,8 +6,6 @@
 
 ## （并非快速的）开始
 
-（请先确保你安装了pywin32等库并且运行了postinstall脚本，我懒得写具体步骤了）
-
 ### 一：开放平台的申请
 
 [哔哩哔哩直播开放平台](https://open-live.bilibili.com/)
