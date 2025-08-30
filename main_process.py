@@ -16,6 +16,7 @@ import asyncio
 
 config=reading_config.read_config()
 
+
 #调整进程音量 beta功能
 def set_process_volume(process_name, target_volume):
     sessions = AudioUtilities.GetAllSessions()
@@ -161,28 +162,11 @@ def TTS(text):
     raise TimeoutError
 
 
-#用于一定长度文字换行的函数
+#用于输出文本到output.txt
 def output_string(text) :
-    maxi=config['live_config']['live_max_len']
-    nowlen=0
-    last_end=0
     with open("logs\\output.txt","a+",encoding='utf-8') as f:
-        for i,c in enumerate(text) :
-            if  '\u3000'<=c<='\u303F' or '\u4e00' <= c <= '\u9fff' :
-                nowlen+=2
-            else :
-                nowlen+=1
-            if nowlen >= maxi :
-                if nowlen == maxi :
-                    print( text[last_end:i+1] ,file=f)
-                    last_end=i+1
-                    nowlen = 0
-                else :
-                    print( text[last_end : i ] ,file=f )
-                    last_end = i
-                    nowlen = 2
-                #print("print!")
-        print( text[last_end : len(text) ] ,file=f )
+        #print("\n",file=f)
+        print(text,file=f)
     return
 
 #更改AI状态
@@ -253,7 +237,7 @@ if __name__ == '__main__':
         #弹幕聊天
         elif slist[listnow].get("type",'0')=='DM':
             #延迟判定
-            if time.time()-slist[listnow].get("time",0) >= config['llm_config']['llm_maxidelay'] :
+            if  time.time()-slist[listnow].get("time",0) >= config['llm_config']['llm_maxidelay'] :
                 print("timeout!")
                 pass
             else:
