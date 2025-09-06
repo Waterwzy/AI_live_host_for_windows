@@ -89,7 +89,7 @@ def not_legal_command(mode,username,need_command):
 
 async def main():
     global processlist, raw_list, listnow, todo_list
-    process_llm = subprocess.Popen(['python', "main_process.py"])
+    process_llm = subprocess.Popen(['python', "llm.py"])
     process_ws = subprocess.Popen(['python', "ws.py"])
 
     listnow = 0
@@ -120,7 +120,7 @@ async def main():
 
             if process_llm.poll() is not None:
                 print("process停止，code", process_llm.returncode, "restarting...")
-                process_llm = subprocess.Popen(['python', "main_process.py"])
+                process_llm = subprocess.Popen(['python', "llm.py"])
             try:
                 if process_game.poll() is not None:
                     # print("game停止，游戏重置")

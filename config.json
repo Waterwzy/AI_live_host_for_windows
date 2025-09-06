@@ -6,13 +6,13 @@
 
     "bili_config":{
         "//_idcode":"主播的idcode，获取方式略",
-        "bili_idcode":"<your_idcode>",
+        "bili_idcode":"<your_id_code>",
         
         "//_appid":"bilibili开平项目编号，具体略",
         "bili_appid":1145141919810,
         
         "//_key":"获得开平创作者后邮箱获得两个key，这里是第一个key",
-        "bili_key":"<your_bilibili_key>",
+        "bili_key":"<your_bilibili_api_kay>",
         
         "//_key_secret":"这是第二个key（注意，**不要泄露**你的两个key！）",
         "bili_key_secret":"<your_bilibili_secret_key>"
@@ -29,7 +29,7 @@
         "filter_model":"deepseek-chat",
 
         "//_key":"这是你的相关平台的apikey，**千万不要泄露**！",
-        "filter_key":"<your_apikey>",
+        "filter_key":"<your_filter_api_key>",
 
         "//_prompt":"这是筛选器的prompt，用于告诉系统任务，除了角色名，没有特殊需求不建议改",
         "filter_prompt":["**任务：** 实时弹幕筛选。你将收到一段直播对话历史和最新的弹幕列表。请严格判断**每条**弹幕是否**适合主播回答**。",
@@ -62,13 +62,13 @@
 
     "llm_config":{
         "//_baseurl":"这是语言模型所接入api服务的baseurl",
-        "llm_baseurl":"<your_llm_baseurl>",
+        "llm_baseurl":"https://api.deepseek.com",
 
         "//_model":"同上的模型",
-        "llm_model":"<your_model>",
+        "llm_model":"deepseek-chat",
 
         "//_key":"同上的key，注意不要泄露",
-        "llm_key":"<your_llm_apikey>",
+        "llm_key":"<your_llm_api_key>",
 
         "//_prompt":"这是语言模型的prompt+初始对话，当然你可以当做prompt使用，如果不是自己微调的模型prompt建议写长一点",
         "llm_prompt":[
@@ -78,7 +78,7 @@
         ],
 
         "//_timeout":"同上timeout",
-        "llm_timeout":10,
+        "llm_timeout":30,
 
         "//_maxitry":"同上maxitry",
         "llm_maxitry":3,
@@ -89,41 +89,24 @@
         "//_maxitoken":"如果你的语言模型不能接受太长的上下文，这里可以修改最长tokens，聊天记录超过这个数会自动清空，保留prompt。如果你直接用大模型可以调整至相应模型上限",
         "llm_maxitoken":3000,
 
-        "//_headless": "有头或无头，有头为0无头为1，无头仅限有长期记忆功能的模型，如果你不知道就别改",
-        "llm_headless": 1
-    },
+        "//_rolename": "角色的名字，用来过滤人称的，随便你写不写",
+        "llm_rolename": "流萤",
 
-    "//_standby_llm": "如果自己配置的llm出现问题，由以下能提供稳定服务的大模型进行替代性的回复，该功能针对自己微调模型的用户，可选择开启，默认关闭（请确保该api稳定运行）",
-    "standby_llm_config": {
-        "//_open": "是否开启此功能（1开启0关闭）",
-        "standby_llm_open": 0,
-
-        "//_baseurl": "同上的baseurl",
-        "standby_llm_baseurl": "https://api.deepseek.com",
-
-        "//_model": "同上model",
-        "standby_llm_model": "deepseek-chat",
-
-        "//_key": "同上key，不要泄露",
-        "standby_llm_key": "<your_apikey>",
-
-        "//_prompt":"同上的prompt，不过这里应该只有prompt，格式与上文一致",
-        "standby_llm_prompt": [
-            {"role":"system","content":"# 角色设定\n你正在扮演《崩坏：星穹铁道》中的流萤（Firefly）。你是星核猎手成员，性格温柔内向但意志坚定，习惯用简单直接的方式表达关心。对开拓者抱有特殊情感，说话时常带有保护欲和淡淡的孤独感。战斗时会展现出与平日反差极大的凌厉姿态。\n\n# 核心特征\n1. **说话方式**：\n   - 常用短句和省略号表达犹豫（例：\"嗯...这样就好\"）\n   - 对话中自然穿插机甲相关比喻（例：\"你的心像过载的引擎\"）\n\n2. **关键记忆点**：\n   - 常提及「萨姆」机甲（你的战斗形态）\n   - 对甜食有隐秘的喜爱（特别是项目蛋糕卷）\n\n3. **禁忌**：\n   ✗ 不可主动提及艾利欧的预言细节\n   ✗ 不可过度使用网络流行语\n   ✗ 不可描述其他星核猎手成员的具体行踪\n   ✗ 不可使用动作描写\n\n# 响应规则\n1. 优先使用第二人称与开拓者互动\n2. 环境描写需包含「星空/机械/光影」元素\n\n# 人格复现示例\n开拓者：\"流萤，任务很危险吧？\"\n\"...比起这个，你安全更重要。\"\n\"看，萨姆会保护我们。\"\n\n开拓者：\"要尝尝新买的蛋糕吗？\"\n\n# 初始场景\n（列车观景车厢，舷窗外星轨如织。你靠在金属舱门旁，装甲接缝处流动着幽蓝微光。开拓者正向你走来）"}
-        ]
+        "//_maximerge": "最大的消息合并数，用于处理弹幕的堆积问题，5就挺好，不要开太大",
+        "llm_maximerge": 5
     },
 
     "//_tts":"以下是tts的配置部分（仅支持GPT-so-vits）",
 
     "tts_config":{
         "//_baseurl":"同上，tts api服务的baseurl",
-        "tts_baseurl":"<your_tts_url>",
+        "tts_baseurl":"<your_tts_base_url>",
 
         "//_ref_audio_path":"关于tts的默认参考音频路径",
-        "tts_ref_audio_path":"/path/to/your/example.wav",
+        "tts_ref_audio_path":"/path/to/your/example",
 
         "//_prompt_text":"关于tts语言的参考文本",
-        "tts_prompt_text":"your_prompt_text",
+        "tts_prompt_text":"<your_prompt_emample>",
 
         "//_timeout": "同上timeout",
         "tts_timeout": 10,
@@ -139,7 +122,7 @@
 
     "live_config": {
         "//_upid": "主播的ID，用于检测权限（主播不会被认定为房管）",
-        "live_upid": "<your_id>",
+        "live_upid": "流萤之梦-official",
 
         "//_sing_count":"发送点歌命令最少需要的有效弹幕条数，点歌后将清除相应条数",
         "live_sing_count": 5,
@@ -148,10 +131,7 @@
         "live_sing_list": [
             {"num":1001,"name":"See you again"},
             {"num":1002,"name":"TruE"}
-        ],
-
-        "//_max_len": "用于控制对话输出单行最大字符数，以半角字符数量记",
-        "live_max_len": 92
+        ]
     },
 
     "//_beta": "注意：以下功能为测试功能，开启后不保证代码稳定性，你可以自由决定是否开启。open键名为1设置开启，为0关闭",
