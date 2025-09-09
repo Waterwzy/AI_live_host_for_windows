@@ -163,8 +163,18 @@ def write_text(text) :
     return
 
 def add_message_in_request(message,added,username) :
-    message += f"\n{username}:{added}"
+    message += f"\n{username}: {added}"
     return message
+
+def add_gift_in_message(gifts):
+    giftstr='\n[直播间消息]'
+    for gift in gifts:
+        if gift['type'] == 'like' :
+            giftstr += ' '+gift['user']+'给直播间点了'+str(gift['message'])+'个赞 '
+        if gift['type'] == 'gift' :
+            giftstr += ' '+gift['user']+'送了礼物：'+gift['message']+' '
+    giftstr += '[直播间消息结束]'
+    return giftstr
 
 async def main():
     global message
@@ -175,6 +185,8 @@ async def main():
     waiting_requests=deque()
     now_messages_added = 0
     current_task = None
+
+    gift_send = deque()
 
     listnow=0
     sing_last_time=0
@@ -198,12 +210,18 @@ async def main():
                     print(ansstr)
                     if len(waiting_requests) :
                         message.append( waiting_requests[0]['request_content'] )
+                        now_messages_added = waiting_requests[0]['now_added']
                         waiting_requests.popleft()
                         current_task = create_task(request_firefly(session,message),name = "streaming-firefly")
+                        if len(gift_send):
+
+                            message[-1]['content'][0]['text'] += add_gift_in_message(gift_send)
+
                         print("从缓冲队列中提取堆积消息处理")
                     else :
                         current_task =None
                         now_messages_added = 0
+                    gift_send.clear()
                     res=await TTS(ansstr)
                     await play_tts(res,ansstr)
 
@@ -250,6 +268,27 @@ async def main():
                 if config['beta_config']['beta_open_sing_control']:
                     set_process_volume(config['beta_config']['beta_sing_control'],1)
                 sing_last_time=1
+
+            #这里是直播间礼物的处理序列逻辑，但是未实现直播间消息合并至请求，这是你明天要做的别忘了
+            elif slist[listnow].get('type','0') == "gift" :
+                gift_send.append({"user":slist[listnow]['user'],"type":"gift","message":slist[listnow]['messages']})
+
+                while len(gift_send) > config['live_config']['live_maxi_live_message']:
+                    gift_send.popleft()
+
+            elif slist[listnow].get('type','0') == "like" :
+                flag = 0
+                for i in gift_send:
+                    if i['user']==slist[listnow]['user'] and i['type']=='like' :
+                        i['message'] += slist[listnow]['messages']
+                        flag = 1
+                        break
+                if flag == 0 :
+                    gift_send.append({"user":slist[listnow]['user'],"type":"like","message":slist[listnow]['messages']})
+
+                while len(gift_send) > config['live_config']['live_maxi_live_message']:
+                    gift_send.popleft()
+
             #弹幕聊天
             elif slist[listnow].get("type",'0')=='DM':
 
@@ -268,7 +307,13 @@ async def main():
                             except asyncio.CancelledError :
                                 print("尝试重发消息出现异常：任务已取消")
                             print(message[-1])
+                            if message[-1]['content'][0]['text'].find(r'\n[直播间消息]') != -1:
+                                message[-1]['content'][0]['text']=message[-1]['content'][0]['text'][ : message[-1]['content'][0]['text'].find(r'\n直播间消息') ]
                             message[-1]['content'][0]['text'] = add_message_in_request( message[-1]['content'][0]['text'] , slist[listnow]['messages'], slist[listnow]['user'])
+                            if len(gift_send) :
+
+                                message[-1]['content'][0]['text'] += add_gift_in_message(gift_send)
+
                             write_text(message)
                             current_task = create_task(request_firefly(session,message),name = "streaming-firefly")
                             now_messages_added += 1
@@ -277,16 +322,14 @@ async def main():
                         continue
 
                     elif now_messages_added == 0 and len(waiting_requests) == 0 and current_task is None :
-                        message.append({"role":"user","content":[{"type":"text","text":slist[listnow].get("user","匿名")+':'+slist[listnow].get("messages",'你好流萤')}]})
+                        message.append({"role":"user","content":[{"type":"text","text":slist[listnow].get("user","匿名")+': '+slist[listnow].get("messages",'你好流萤')}]})
+                        if len(gift_send):
+                            message[-1]['content'][0]['text'] += add_gift_in_message(gift_send)
                         write_text(message)
                         now_messages_added  = 1
                         current_task = create_task(request_firefly(session,message),name = "streaming-firefly")
                         print("发送新的request，当前列表空闲")
-                    #这里的处理有误
-                    #程序进入这里，说明了当前处理合并的弹幕数已经到达了最大值
-                    #此时，应该做的是打包消息，并且等待发送（等待上下文更新），而不是立刻发送
-                    #可以用一个列表处理，await task完成，就将列表中排队的task发送，这里就可以用来处理消息的合并
-                    #此问题疑似已被修复
+
                     else :
                         if len(waiting_requests) == 0 or waiting_requests[-1]['now_added'] == config['llm_config']['llm_maximerge'] :
                             waiting_requests.append({"now_added": 1 , "request_content":{"role": "user", "content": [{"type": "text",
@@ -297,40 +340,6 @@ async def main():
                             waiting_requests[-1]['request_content']['content'][0]['text'] = add_message_in_request( waiting_requests[-1]['request_content'][0]['text'] , slist[listnow]['messages'], slist[listnow]['user'] )
                             waiting_requests[-1]['now_added'] += 1
                         print("弹幕堆积中，已添加至缓冲队列")
-
-                    '''
-                    try:
-                        #now_process_id += 1
-                        #now_messages_added = 1
-                        ans= await create_task(request_firefly(session,message),name = "streaming-"+str(now_process_id)) #正常的request
-
-                    except TimeoutError:
-                        print("Error:llm timed out as ",e," failed to process the command.")
-                    mode_change("chat（读取弹幕）")
-                    print(ans)
-                    
-                    tokens_used=ans['usage']['total_tokens']
-                    print("tokens used:"+str(tokens_used))
-                    ans=ans['choices'][0]['message']
-                    ansstr=ans['content']
-                    message.append(ans)
-                    '''
-
-                    #print(message)
-                    '''
-                    ansstr = ansstr[ len(config['llm_config']['lln_rolename'] ) +1 : ] if ansstr.startswith(config['llm_config']['llm_rolename']) else ansstr
-                    print(ansstr)
-                    write_text(message)
-                    #ansstr=ansstr[3:len(ansstr)]
-                    try:
-                        res= await TTS(ansstr)
-                        await play_tts(res,ansstr)
-                    except Exception as e:
-                        print("failed to tts")
-                    finally:
-                        now_process_id += 1
-                        now_messages_added = 0
-                    '''
 
             listnow+=1
     return

@@ -3,7 +3,6 @@ import time
 import asyncio
 import aiohttp
 import json
-from time import sleep
 import reading_config
 from vts_emotion import emotion_init
 
@@ -163,11 +162,13 @@ async def main():
                 with open("logs\\livetext.txt", 'a+', encoding='utf-8') as f:
                     print("感谢 " + raw_list[processlist]['username'] + " 投喂的" + raw_list[processlist][
                         'message'] + "谢谢喵", file=f)
+                add_list('gift',raw_list[processlist]['message'],raw_list[processlist]['username'],0 )
 
             elif raw_list[processlist].get('cmd', 'null') == 'LIVE_OPEN_PLATFORM_LIKE':
                 with open("logs\\livetext.txt", 'a+', encoding='utf-8') as f:
                     print("感谢 " + raw_list[processlist]['username'] + " 的 " + str(
                         raw_list[processlist]['message']) + " 个喜欢喵", file=f)
+                add_list('like',raw_list[processlist]['message'],raw_list[processlist]['username'],0)
 
             elif raw_list[processlist].get('cmd', 'null') == 'LIVE_OPEN_PLATFORM_GUARD':
                 lv = raw_list[processlist].get('message', -1)

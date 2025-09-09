@@ -127,6 +127,9 @@
         "//_sing_count":"发送点歌命令最少需要的有效弹幕条数，点歌后将清除相应条数",
         "live_sing_count": 5,
 
+        "//_maxi_live_message": "llm最大接受到的直播间消息数量，包括点赞和礼物，多次点赞会被合并，取最新的直播间数据在弹幕发送时统一发送",
+        "live_maxi_live_message": 5,
+
         "//_sing_list":"点歌系统的点歌列表，用字典形式表示，按照样例填写即可，注意将相应歌曲文件（.WAV）保存至/AI目录",
         "live_sing_list": [
             {"num":1001,"name":"See you again"},
