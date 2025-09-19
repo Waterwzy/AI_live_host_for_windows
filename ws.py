@@ -9,9 +9,9 @@ import random
 from hashlib import sha256
 import proto
 import reading_config
+from logging_config import app_logger
 
 config=reading_config.read_config()
-
 
 list_raw=[]
 
@@ -107,7 +107,7 @@ class BiliClient:
                 raise ValueError("未获取到 WebSocket 地址")
             return wss_links[0], auth_body
         except Exception as e:
-            print(f"获取 WebSocket 信息失败: {e}")
+            app_logger.error(f"获取 WebSocket 信息失败: {e}")
             raise
     async def appheartBeat(self):
         while True:
@@ -118,7 +118,7 @@ class BiliClient:
             r = requests.post(url=postUrl, headers=headerMap,
                           data=params, verify=False)
             data = json.loads(r.content)
-            print("[BiliClient] send appheartBeat success")
+            app_logger.info("[BiliClient] send appheartBeat success")
 
 
     # 发送鉴权信息
@@ -132,9 +132,9 @@ class BiliClient:
         resp.unpack(buf)
         respBody = json.loads(resp.body)
         if respBody["code"] != 0:
-            print("auth 失败")
+            app_logger.error("auth 失败")
         else:
-            print("auth 成功")
+            app_logger.info("auth 成功")
 
     # 发送心跳
     async def heartBeat(self, websocket):
@@ -143,11 +143,11 @@ class BiliClient:
             req = proto.Proto()
             req.op = 2
             await websocket.send(req.pack())
-            print("[BiliClient] send heartBeat success")
+            app_logger.info("[BiliClient] send heartBeat success")
 
     # 读取信息
     async def recvLoop(self, websocket):
-        print("[BiliClient] run recv...")
+        app_logger.info("[BiliClient] run recv...")
         #list_raw = manager.get_list()
         while True:
             try:
@@ -158,21 +158,21 @@ class BiliClient:
 
                 # 检查 body 是否有效
                 if not resp.body:
-                    print("消息体为空，跳过处理")
+                    app_logger.debug("消息体为空，跳过处理")
                     continue
 
                 try:
                     # 尝试解析 JSON
                     resp_data = json.loads(resp.body)
                 except json.JSONDecodeError:
-                    print(f"JSON 解析失败，原始内容: {resp.body}")
+                    app_logger.debug(f"JSON 解析失败，原始内容: {resp.body}")
                     continue
 
                 # 安全访问字段
                 cmd = resp_data.get("cmd", "")
                 data_body = resp_data.get("data", {})
 
-                print(f"收到指令: {cmd}")
+                app_logger.info(f"收到指令: {cmd}")
                 #针对不同命令的添加，对于相关命令不重要的字段直接省去
                 if cmd == "LIVE_OPEN_PLATFORM_DM" and data_body.get('dm_type',1)==0:
                     msg = data_body.get("msg", "")
@@ -181,7 +181,7 @@ class BiliClient:
 
                     add_raw(timestamp,data_body.get("uname","unkown"),data_body.get("msg",""),cmd,data_body.get('is_admin',0))
 
-                    print(f"捕获弹幕: {uname} -> {msg}")
+                    app_logger.info(f"捕获弹幕: {uname} -> {msg}")
 
                 if cmd == "LIVE_OPEN_PLATFORM_SEND_GIFT":
                     msg =data_body.get("gift_name",'null')
@@ -207,10 +207,10 @@ class BiliClient:
                     add_raw(timestamp,uname,type,cmd,0)
 
             except websockets.exceptions.ConnectionClosed:
-                print("WebSocket 连接已关闭")
+                app_logger.error("WebSocket 连接已关闭")
                 break
             except Exception as e:
-                print(f"处理消息时发生异常: {e}")
+                app_logger.error(f"处理消息时发生异常: {e}")
 
     # 建立连接
     async def connect(self):
@@ -222,7 +222,7 @@ class BiliClient:
         return websocket
 
     def __enter__(self):
-        print("[BiliClient] enter")
+        app_logger.info("[BiliClient] enter")
 
     def __exit__(self, type, value, trace):
         # 关闭应用
@@ -231,7 +231,7 @@ class BiliClient:
         headerMap = self.sign(params)
         r = requests.post(url=postUrl, headers=headerMap,
                           data=params, verify=False)
-        print("[BiliClient] end app success", params)
+        app_logger.warning("[BiliClient] end app success"+ params)
 
 
 if __name__ == '__main__':

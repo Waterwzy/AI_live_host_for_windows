@@ -4,7 +4,7 @@ import asyncio
 import aiohttp
 import json
 import reading_config
-from vts_emotion import emotion_init
+from logging_config import app_logger
 
 config = reading_config.read_config()
 
@@ -36,7 +36,7 @@ async def requestds(session, question):
                 else:
                     raise Exception(f"HTTP error: {response.status}")
         except Exception as e:
-            print("filter error as", e, "retrying...")
+            app_logger.error("filter error as"+ str(e) + "retrying...")
             retry += 1
 
     raise TimeoutError
@@ -108,17 +108,17 @@ async def main():
     with open("logs\\todo_raw.json", "w", encoding='utf-8') as f:
         json.dump([], f, ensure_ascii=False, indent=4)
 
-    await emotion_init()
+    #await emotion_init()
 
     async with aiohttp.ClientSession() as session:
         while True:
             # 子进程异常关闭监测
             if process_ws.poll() is not None:
-                print("ws停止，code：", process_ws.returncode, "restarting...")
+                app_logger.warning("ws停止，code："+ str(process_ws.returncode)+"restarting...")
                 process_ws = subprocess.Popen(['python', "ws.py"])
 
             if process_llm.poll() is not None:
-                print("process停止，code", process_llm.returncode, "restarting...")
+                app_logger.warning("process停止，code"+ str(process_llm.returncode)+"restarting...")
                 process_llm = subprocess.Popen(['python', "llm.py"])
             try:
                 if process_game.poll() is not None:
@@ -130,7 +130,7 @@ async def main():
                 with open("logs\\todo_raw.json", "r", encoding='utf-8') as f:
                     raw_list = json.load(f)
             except Exception as e:
-                print("fail to read the raw!")
+                app_logger.warning("fail to read the raw!")
                 await asyncio.sleep(1)
                 continue
             if nowgame:
@@ -138,15 +138,15 @@ async def main():
                     nowgame = 0
                     try:
                         process_game.kill()
-                        print("game killed!")
+                        app_logger.info("game killed cause of timeout")
                     except Exception as e:
-                        print("fail to kill the game!")
+                        app_logger.warning("fail to kill the game!")
             if len(raw_list) <= processlist:
                 await asyncio.sleep(1)
                 continue
             if nowgame and raw_list[processlist].get('username') == game_user and (
                 legal_game_command(raw_list[processlist].get('message')) is not None):
-                print('game message get!')
+                app_logger.info('game message get!')
                 text = raw_list[processlist].get('message')
                 game_dict = {"cmd": "down", "message": legal_game_command(text)}
                 game_list.append(game_dict)
@@ -179,10 +179,10 @@ async def main():
                 else:
                     gtype = '舰长'
                 with open('logs\\livetext.txt', 'a+', encoding='utf-8') as f:
-                    print("谢谢 " + raw_list[processlist]['username'] + '的' + gtype + "\n谢谢老板老板大气喵")
+                    print("谢谢 " + raw_list[processlist]['username'] + '的' + gtype + "\n谢谢老板老板大气喵",file=f)
 
             # 弹幕逻辑处理
-            if raw_list[processlist].get("cmd", 'null') == 'LIVE_OPEN_PLATFORM_DM':
+            elif raw_list[processlist].get("cmd", 'null') == 'LIVE_OPEN_PLATFORM_DM':
                 message_content = raw_list[processlist].get("message", "")
                 username = raw_list[processlist].get("username", "匿名")
                 # 移除上下文，判定是否为房管或主播鉴权
@@ -209,7 +209,7 @@ async def main():
                     for sings in sing_list:
                         if singname == str(sings['num']) or singname == sings['name']:
                             add_list('aising', sings['name'], '', 0)
-                            print("翻唱请求已添加！")
+                            app_logger.info("翻唱请求已添加！")
                             break
                 elif raw_list[processlist].get('message', '')[0] == '#' or raw_list[processlist].get('message','')[0:3]=='点歌 ':
                     pass
@@ -240,7 +240,7 @@ async def main():
                     game_list = []
                     add_dict = {'cmd': 'start', 'message': game_user}
                     game_list.append(add_dict)
-                    print("game start:\nplayer:", game_user)
+                    app_logger.info("game start:\nplayer:" + game_user)
                     with open("logs\\game.json", "w", encoding='utf-8') as f:
                         json.dump(game_list, f, ensure_ascii=False, indent=4)
                     process_game = subprocess.Popen(['python', "game\\main.py"])
@@ -255,14 +255,14 @@ async def main():
                             "content": f"{mystr}\nnew_danmaku：{username}:{message_content}"
                         }
                     except Exception as e:
-                        print("fail to read text")
+                        app_logger.error("fail to read text")
                         await asyncio.sleep(1)
                         continue
 
                     try:
                         response = await requestds(session, message)
                     except TimeoutError:
-                        print("Error: filter timed out, failed to process the danmaku.")
+                        app_logger.error("Error: filter timed out, failed to process the danmaku.")
                         processlist += 1
                         continue
 
@@ -277,9 +277,9 @@ async def main():
                         if flag == 0:
                             dmcount.append({"user": username, "count": 1})
                         add_list("DM", message_content, username, raw_list[processlist].get("time", 0))
-                        print("弹幕已处理！")
+                        app_logger.info("弹幕已处理！,内容"+message_content)
                     else:
-                        print("弹幕被过滤！")
+                        app_logger.info("弹幕被过滤！,内容"+message_content)
 
             processlist += 1
 

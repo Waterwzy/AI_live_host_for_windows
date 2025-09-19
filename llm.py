@@ -13,6 +13,7 @@ import copy
 import reading_config
 import vts_emotion
 import asyncio
+from logging_config import app_logger
 
 config=reading_config.read_config()
 message=[]
@@ -38,7 +39,7 @@ def set_process_volume(process_name, target_volume):
             volume = session._ctl.QueryInterface(ISimpleAudioVolume)
             volume.SetMasterVolume(target_volume, None)
         except Exception as e:
-            print(f"调整音量失败: {e}")
+            app_logger.info(f"调整音量失败: {e}")
 
 #llm的访问过程，兼容openai接口
 async def request_firefly(session,question):
@@ -66,7 +67,7 @@ async def request_firefly(session,question):
                 else :
                     raise Exception(f"HTTP error: {response.status}")
         except Exception as e:
-            print("Error in llm:",e," retrying...")
+            app_logger.error("Error in llm:"+str(e)+" retrying...")
             retry+=1
     raise TimeoutError
 
@@ -105,7 +106,7 @@ async def TTS(text):
             if response.status_code == 200 and 'audio/wav' in response.headers.get('Content-Type', ''):
                 return response
         except Exception as e:
-            print("tts error:",e,"retrying...")
+            app_logger.error("tts error:"+str(e)+"retrying...")
             retry+=1
     raise TimeoutError
 
@@ -129,7 +130,7 @@ async def play_tts(response,text):
     try:
         os.remove(temp_file)
     except Exception as e:
-        print(f"删除临时文件失败: {e}")
+        app_logger.error(f"删除临时文件失败: {e}")
     if config['beta_config']['beta_open_vts_emotion']:
         await vts_emotion.emotion_main()
     return
@@ -178,7 +179,7 @@ def add_gift_in_message(gifts):
 
 async def main():
     global message
-    print("listening...")
+    app_logger.info("llm.py starting...")
     removecontext()
     write_text(message)
 
@@ -217,7 +218,7 @@ async def main():
 
                             message[-1]['content'][0]['text'] += add_gift_in_message(gift_send)
 
-                        print("从缓冲队列中提取堆积消息处理")
+                        app_logger.info("从缓冲队列中提取堆积消息处理")
                     else :
                         current_task =None
                         now_messages_added = 0
@@ -228,23 +229,23 @@ async def main():
                     if tokens_used>config['llm_config']["llm_maxitoken"]:
                         removecontext()
                 except asyncio.CancelledError:
-                    print("返回任务结果时出现问题：任务异常取消")
+                    app_logger.warning("返回任务结果时出现问题：任务异常取消")
                     current_task = None
                     now_messages_added = 0
                 except Exception as e:
-                    print("返回任务结果时出现其他问题：",e)
+                    app_logger.error("返回任务结果时出现其他问题："+str(e))
             #读取命令
             try:
                 with open("logs\\command.json",'r',encoding='utf-8') as f:
                     slist=json.load(f)
             except Exception as e:
-                print(e)
+                app_logger.error(e)
                 continue
             try:
                 with open("logs\\text.json",'r',encoding='utf-8') as f:
                     message=json.load(f)
             except Exception as e:
-                print(e)
+                app_logger.error(e)
                 continue
             #'''
             #转换模式（翻唱结束）
@@ -258,7 +259,7 @@ async def main():
 
             elif slist[listnow].get('type','0')=='rem':
                 removecontext()
-                print("removed!")
+                app_logger.info("removed content!")
             #唱歌
             elif slist[listnow].get('type','0')=='aising':
                 mode_change("singing（忽略弹幕消息）")
@@ -295,7 +296,7 @@ async def main():
 
                 #延迟判定
                 if time.time()-slist[listnow].get("time",0) >= config['llm_config']['llm_maxidelay'] :
-                    print("timeout!")
+                    app_logger.info("timeout!内容:"+slist[listnow]['message'])
                     pass
                 else:
                     #不需要try except是因为我们在这里已经确定了任务没有结束
@@ -305,10 +306,10 @@ async def main():
                                 current_task.cancel()
                                 await current_task
                             except asyncio.CancelledError :
-                                print("尝试重发消息出现异常：任务已取消")
+                                app_logger.warning("尝试重发消息出现异常：任务已取消")
                             print(message[-1])
-                            if message[-1]['content'][0]['text'].find(r'\n[直播间消息]') != -1:
-                                message[-1]['content'][0]['text']=message[-1]['content'][0]['text'][ : message[-1]['content'][0]['text'].find(r'\n直播间消息') ]
+                            if message[-1]['content'][0]['text'].find(r'\\n[直播间消息]') != -1:
+                                message[-1]['content'][0]['text']=message[-1]['content'][0]['text'][ : message[-1]['content'][0]['text'].find(r'\\n直播间消息') ]
                             message[-1]['content'][0]['text'] = add_message_in_request( message[-1]['content'][0]['text'] , slist[listnow]['messages'], slist[listnow]['user'])
                             if len(gift_send) :
 
@@ -317,7 +318,7 @@ async def main():
                             write_text(message)
                             current_task = create_task(request_firefly(session,message),name = "streaming-firefly")
                             now_messages_added += 1
-                            print("取消请求，添加新的请求，当前合并弹幕数量",now_messages_added)
+                            app_logger.info("取消请求，添加新的请求，当前合并弹幕数量"+str(now_messages_added))
                         listnow += 1
                         continue
 
@@ -328,7 +329,7 @@ async def main():
                         write_text(message)
                         now_messages_added  = 1
                         current_task = create_task(request_firefly(session,message),name = "streaming-firefly")
-                        print("发送新的request，当前列表空闲")
+                        app_logger.info("发送新的request，当前列表空闲")
 
                     else :
                         if len(waiting_requests) == 0 or waiting_requests[-1]['now_added'] == config['llm_config']['llm_maximerge'] :
@@ -339,7 +340,7 @@ async def main():
                         else :
                             waiting_requests[-1]['request_content']['content'][0]['text'] = add_message_in_request( waiting_requests[-1]['request_content'][0]['text'] , slist[listnow]['messages'], slist[listnow]['user'] )
                             waiting_requests[-1]['now_added'] += 1
-                        print("弹幕堆积中，已添加至缓冲队列")
+                        app_logger.info("弹幕堆积中，已添加至缓冲队列")
 
             listnow+=1
     return

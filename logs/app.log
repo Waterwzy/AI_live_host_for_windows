@@ -1,0 +1,89 @@
+2025-09-19 22:20:33 -  INFO - [BiliClient] enter
+2025-09-19 22:20:33 -  INFO - auth 成功
+2025-09-19 22:20:33 -  INFO - [BiliClient] run recv...
+2025-09-19 22:20:34 -  INFO - llm.py starting...
+2025-09-19 22:20:46 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_LIVE_ROOM_ENTER
+2025-09-19 22:20:53 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:20:54 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:20:54 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:20:55 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_DM
+2025-09-19 22:20:55 -  INFO - 捕获弹幕: 流萤之梦-official -> 流萤妹妹晚上好
+2025-09-19 22:20:57 -  INFO - 弹幕已处理！,内容流萤妹妹晚上好
+2025-09-19 22:20:57 -  INFO - 发送新的request，当前列表空闲
+2025-09-19 22:21:05 -  WARNING - Token authentication failed, getting new token: 'authenticated'
+2025-09-19 22:21:05 -  INFO - Triggered emotion: 萨姆变身
+2025-09-19 22:21:11 -  WARNING - Token authentication failed, getting new token: 'authenticated'
+2025-09-19 22:21:11 -  INFO - Triggered emotion: 耳机
+2025-09-19 22:21:14 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:21:14 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:21:14 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:21:29 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_DM
+2025-09-19 22:21:29 -  INFO - 捕获弹幕: 流萤之梦-official -> 额，我还不想睡觉，想跟你聊聊天
+2025-09-19 22:21:30 -  INFO - 弹幕已处理！,内容额，我还不想睡觉，想跟你聊聊天
+2025-09-19 22:21:31 -  INFO - 发送新的request，当前列表空闲
+2025-09-19 22:21:34 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:21:34 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:21:34 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:21:39 -  WARNING - Token authentication failed, getting new token: 'authenticated'
+2025-09-19 22:21:39 -  INFO - Triggered emotion: 喝饮料
+2025-09-19 22:21:45 -  WARNING - Token authentication failed, getting new token: 'authenticated'
+2025-09-19 22:21:45 -  INFO - Triggered emotion: 挤星星
+2025-09-19 22:21:54 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:21:54 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:21:54 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:22:14 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:22:14 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:22:14 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:22:35 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:22:35 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:22:35 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:22:53 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_DM
+2025-09-19 22:22:53 -  INFO - 捕获弹幕: 流萤之梦-official -> 话虽如此，但我还不知道聊什么
+2025-09-19 22:22:55 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:22:55 -  INFO - 弹幕已处理！,内容话虽如此，但我还不知道聊什么
+2025-09-19 22:22:55 -  INFO - 发送新的request，当前列表空闲
+2025-09-19 22:22:55 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:22:55 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:23:07 -  WARNING - Token authentication failed, getting new token: 'authenticated'
+2025-09-19 22:23:07 -  INFO - Triggered emotion: 萨姆变身
+2025-09-19 22:23:15 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:23:15 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:23:15 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:23:18 -  WARNING - Token authentication failed, getting new token: 'authenticated'
+2025-09-19 22:23:18 -  INFO - Triggered emotion: 捧脸
+2025-09-19 22:23:35 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:23:35 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:23:35 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:23:42 -  WARNING - [BiliClient] end app success{"game_id":"01ed850d-ace6-4501-a830-02ffb2a7604a","app_id":3548593272004622}
+2025-09-19 22:28:21 -  INFO - [BiliClient] enter
+2025-09-19 22:28:21 -  INFO - llm.py starting...
+2025-09-19 22:28:21 -  INFO - auth 成功
+2025-09-19 22:28:21 -  INFO - [BiliClient] run recv...
+2025-09-19 22:28:30 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_DM
+2025-09-19 22:28:30 -  INFO - 捕获弹幕: 流萤之梦-official -> game
+2025-09-19 22:28:30 -  INFO - game start:
+player:流萤之梦-official
+2025-09-19 22:28:41 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_DM
+2025-09-19 22:28:41 -  INFO - 捕获弹幕: 流萤之梦-official -> g9
+2025-09-19 22:28:41 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:28:42 -  INFO - game message get!
+2025-09-19 22:28:43 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:28:43 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:28:44 -  INFO - 弹幕被过滤！,内容g9
+2025-09-19 22:28:48 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_DM
+2025-09-19 22:28:48 -  INFO - 捕获弹幕: 流萤之梦-official -> f9
+2025-09-19 22:28:49 -  INFO - game message get!
+2025-09-19 22:28:49 -  INFO - 弹幕被过滤！,内容f9
+2025-09-19 22:28:56 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_DM
+2025-09-19 22:28:56 -  WARNING - fail to read the raw!
+2025-09-19 22:28:56 -  INFO - 捕获弹幕: 流萤之梦-official -> e10
+2025-09-19 22:28:57 -  INFO - game message get!
+2025-09-19 22:28:58 -  INFO - 弹幕被过滤！,内容e10
+2025-09-19 22:29:02 -  INFO - 收到指令: LIVE_OPEN_PLATFORM_DM
+2025-09-19 22:29:02 -  INFO - 捕获弹幕: 流萤之梦-official -> d10
+2025-09-19 22:29:02 -  INFO - game message get!
+2025-09-19 22:29:03 -  INFO - 弹幕被过滤！,内容d10
+2025-09-19 22:29:03 -  INFO - [BiliClient] send appheartBeat success
+2025-09-19 22:29:03 -  INFO - [BiliClient] send heartBeat success
+2025-09-19 22:29:03 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
+2025-09-19 22:29:14 -  WARNING - [BiliClient] end app success{"game_id":"f499a999-ffa7-48b5-8f51-03b9d4b2ecfe","app_id":3548593272004622}
