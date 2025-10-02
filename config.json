@@ -93,7 +93,13 @@
         "llm_rolename": "流萤",
 
         "//_maximerge": "最大的消息合并数，用于处理弹幕的堆积问题，5就挺好，不要开太大",
-        "llm_maximerge": 5
+        "llm_maximerge": 5,
+
+        "//_headless": "是否使用无头，无头为0（记忆模式）有头为1（无记忆），除非你确定自己有记忆功能，选择1，以下的其他llm相关配置就不用管了",
+        "llm_headless": 1,
+
+        "//_reset_url": "记忆功能重置的url，理论上访问这个url可以删除长期记忆，应当使用和上面一样的key",
+        "llm_reset_url": "<your_url_for_clear_history>"
     },
 
     "//_tts":"以下是tts的配置部分（仅支持GPT-so-vits）",

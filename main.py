@@ -36,7 +36,7 @@ async def requestds(session, question):
                 else:
                     raise Exception(f"HTTP error: {response.status}")
         except Exception as e:
-            app_logger.error("filter error as"+ str(e) + "retrying...")
+            app_logger.error(f"filter error as {e} retrying...")
             retry += 1
 
     raise TimeoutError
@@ -114,11 +114,11 @@ async def main():
         while True:
             # 子进程异常关闭监测
             if process_ws.poll() is not None:
-                app_logger.warning("ws停止，code："+ str(process_ws.returncode)+"restarting...")
+                app_logger.warning(f"ws停止，code：{process_ws.returncode}restarting...")
                 process_ws = subprocess.Popen(['python', "ws.py"])
 
             if process_llm.poll() is not None:
-                app_logger.warning("process停止，code"+ str(process_llm.returncode)+"restarting...")
+                app_logger.warning(f"process停止，code{process_llm.returncode}restarting...")
                 process_llm = subprocess.Popen(['python', "llm.py"])
             try:
                 if process_game.poll() is not None:
@@ -240,7 +240,7 @@ async def main():
                     game_list = []
                     add_dict = {'cmd': 'start', 'message': game_user}
                     game_list.append(add_dict)
-                    app_logger.info("game start:\nplayer:" + game_user)
+                    app_logger.info(f"game start:\nplayer:{game_user}" )
                     with open("logs\\game.json", "w", encoding='utf-8') as f:
                         json.dump(game_list, f, ensure_ascii=False, indent=4)
                     process_game = subprocess.Popen(['python', "game\\main.py"])
@@ -265,8 +265,9 @@ async def main():
                         app_logger.error("Error: filter timed out, failed to process the danmaku.")
                         processlist += 1
                         continue
-
-                    if response['choices'][0]['message']['content'] == 'process':
+                    response['choices'][0]['message']['content'] = response['choices'][0]['message']['content'].strip()
+                    #print(response['choices'][0]['message']['content'])
+                    if response['choices'][0]['message']['content'] == 'process' :
                         # 添加弹幕到处理列表
                         flag = 0
                         for user in dmcount:
@@ -277,9 +278,10 @@ async def main():
                         if flag == 0:
                             dmcount.append({"user": username, "count": 1})
                         add_list("DM", message_content, username, raw_list[processlist].get("time", 0))
-                        app_logger.info("弹幕已处理！,内容"+message_content)
+                        app_logger.info(f"弹幕已处理！内容:{message_content}")
                     else:
-                        app_logger.info("弹幕被过滤！,内容"+message_content)
+                        app_logger.info(f"弹幕被过滤！内容:{message_content}")
+                        #print(response['choices'][0]['message']['reasoning_content'])
 
             processlist += 1
 
