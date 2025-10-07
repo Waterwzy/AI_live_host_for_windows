@@ -192,7 +192,7 @@ async def main():
                         config['live_config']['live_upid']):
                     add_list('rem', '', '', 0)
                 # 翻唱命令
-                if message_content.startswith("翻唱 "):
+                elif message_content.startswith("翻唱 "):
                     singname = message_content[3:]
                     flag = 0
                     # 检查用户权限

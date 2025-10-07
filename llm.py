@@ -58,7 +58,7 @@ async def request_firefly(session,question):
             "messages":[question[-1]],
             "stream":False,
             "headless":0,
-            "nickname":"流萤之梦",
+            "nickname":"",
             "session_id":"streaming-firefly",
             "enable_memory":1,
         }
@@ -170,7 +170,7 @@ def removecontext():
     #print(message)
     with open("logs\\text.json","w",encoding='utf-8') as f:
         json.dump(message,f,ensure_ascii=False,indent=4)
-    return
+    return 1
 
 #将对话记录写入json文件，方便查询历史对话
 def write_text(text) :
@@ -199,7 +199,8 @@ async def main():
     global message
     app_logger.info("llm.py starting...")
     #这是什么？原来是初始消息写入的init，不能吃！虽然吃了不会死
-    removecontext()
+    removed_text_before_output = 0
+    removed_text_before_output = removecontext()#如果上下文清空时，含有未返回结果的任务，会造成上下文处理的混乱，我们需要避免清空后的任务返回结果添加至消息列表
     write_text(message)
     #这是什么，原来是消息合并相关的init，不能吃！吃了也吃不饱
     waiting_requests=deque()
@@ -210,6 +211,7 @@ async def main():
     listnow=0
     sing_last_time=0
     mode_change("chat（读取弹幕）")
+    
 
     #如果有记忆模式，这里是重置记忆
     if not config['llm_config']['llm_headless']:
@@ -229,16 +231,17 @@ async def main():
                 #print(current_task.done())
             if current_task is not None and current_task.done() :#任务结束的售后处理环节...
                 try:
-                    ans=current_task.result()#一堆阴到没边的格式转换
-                    tokens_used = ans['usage']['total_tokens']
-                    print("tokens used:" + str(tokens_used))
-                    ans = ans['choices'][0]['message']
-                    ansstr = ans['content']
-                    message.append(ans)
-                    write_text(message)
-                    ansstr = ansstr[len(config['llm_config']['llm_rolename']) + 1:] if ansstr.startswith(
-                            config['llm_config']['llm_rolename']) else ansstr#十分神人的格式筛选（如果开头有角色名就直接去掉，我管你这的那的）
-                    print(ansstr)
+                    if not removed_text_before_output :#如果上下文清空发生在消息发出后，我们这里就直接跳过这些处理
+                        ans=current_task.result()#一堆阴到没边的格式转换
+                        tokens_used = ans['usage']['total_tokens']
+                        print("tokens used:" + str(tokens_used))
+                        ans = ans['choices'][0]['message']
+                        ansstr = ans['content']
+                        message.append(ans)
+                        write_text(message)
+                        ansstr = ansstr[len(config['llm_config']['llm_rolename']) + 1:] if ansstr.startswith(
+                                    config['llm_config']['llm_rolename']) else ansstr#十分神人的格式筛选（如果开头有角色名就直接去掉，我管你这的那的）
+                        print(ansstr)
                     if len(waiting_requests) :#缓冲队列的消息处理，这段只有上帝他老人家看得懂
                         message.append( waiting_requests[0]['request_content'] )
                         now_messages_added = waiting_requests[0]['now_added']
@@ -257,7 +260,7 @@ async def main():
                     await play_tts(res,ansstr)
 
                     if tokens_used>config['llm_config']["llm_maxitoken"]:#我tm直接重置上下文，管你这的那的
-                        removecontext()
+                        removed_text_before_output = removecontext()
                 except asyncio.CancelledError:#正常报错，所以这不是错误，是warning
                     app_logger.warning("返回任务结果时出现问题：任务异常取消")
                     current_task = None
@@ -288,7 +291,7 @@ async def main():
                 continue
 
             elif slist[listnow].get('type','0')=='rem':#管你这的那的，重置上下文，启动！
-                removecontext()
+                removed_text_before_output = removecontext()
                 app_logger.info("removed content!")
             #唱歌
             elif slist[listnow].get('type','0')=='aising':
@@ -329,6 +332,7 @@ async def main():
                     app_logger.info(f"timeout!内容:{slist[listnow]['message']}")
                     pass
                 else:
+                    removed_text_before_output = 0 #这里已经是消息发出的部分了，直接重置变量如果后面有重置上下文将会改变返回结果
                     #处理最难处理的部分，气死我了
                     if now_messages_added < config['llm_config']['llm_maximerge'] and now_messages_added != 0 and len(waiting_requests) == 0 :
                         if current_task is not None and current_task.done() == False :
