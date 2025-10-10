@@ -282,7 +282,7 @@ async def main():
                 continue
             #'''
             #转换模式（翻唱结束）
-            if sing_last_time==1:#看看你的列表长度正不正常
+            if sing_last_time==1 : 
                 mode_change("chat（读取弹幕）")
                 listnow=len(slist)-1
                 sing_last_time=0

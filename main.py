@@ -118,11 +118,11 @@ async def main():
         while True:
             # 子进程异常关闭监测
             if process_ws.poll() is not None:
-                app_logger.warning(f"ws停止，code：{process_ws.returncode}restarting...")
+                app_logger.critical(f"ws停止，with return code：{process_ws.returncode}.restarting...")
                 process_ws = subprocess.Popen(['python', "ws.py"])
 
             if process_llm.poll() is not None:
-                app_logger.warning(f"process停止，code{process_llm.returncode}restarting...")
+                app_logger.critical(f"process停止，with return code{process_llm.returncode}.restarting...")
                 process_llm = subprocess.Popen(['python', "llm.py"])
             try:
                 if process_game.poll() is not None:
