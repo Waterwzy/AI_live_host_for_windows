@@ -11,7 +11,6 @@ config = reading_config.read_config()
 sing_list = config['live_config']['live_sing_list']
 dmcount = []#key:user,count
 
-
 # 异步过滤器访问
 async def requestds(session, question):
     retry = 0
@@ -41,7 +40,6 @@ async def requestds(session, question):
 
     raise TimeoutError
 
-
 # command 列表添加
 def add_list(command_type, msg, command_user, time):
     global processlist, raw_list, listnow, todo_list
@@ -54,7 +52,6 @@ def add_list(command_type, msg, command_user, time):
         json.dump(todo_list, f, ensure_ascii=False, indent=4)
     listnow += 1
     return
-
 
 # 判断是否是合法的游戏指令
 def legal_game_command(text):
@@ -75,6 +72,7 @@ def legal_game_command(text):
             return None
     return None
 
+#如果不是合法的指令，在livetext中输出权限不够的提示
 def not_legal_command(mode,username,need_command):
     global dmcount
     for user in dmcount:
@@ -88,8 +86,8 @@ def not_legal_command(mode,username,need_command):
 
 async def main():
     global processlist, raw_list, listnow, todo_list
-    process_llm = subprocess.Popen(['python', "llm.py"])
-    process_ws = subprocess.Popen(['python', "ws.py"])
+    process_llm = subprocess.Popen(['python', "llm.py"]  , stderr= subprocess.PIPE , text = True )
+    process_ws = subprocess.Popen(['python', "ws.py"]  , stderr= subprocess.PIPE , text = True )
 
     listnow = 0
     processlist = 0
@@ -118,12 +116,16 @@ async def main():
         while True:
             # 子进程异常关闭监测
             if process_ws.poll() is not None:
-                app_logger.critical(f"ws停止，with return code：{process_ws.returncode}.restarting...")
-                process_ws = subprocess.Popen(['python', "ws.py"])
+                err_message = process_ws.stderr.read() if process_ws.stderr else 'N/A'
+                print(f"!!!CIRTICAL!!! ws.py has STOPPED!!RETURN INFORMATION:{err_message}")
+                app_logger.critical(f"ws停止 with return code：{process_ws.returncode}.restarting...")
+                process_ws = subprocess.Popen(['python', "ws.py"], stderr=subprocess.PIPE  , text=True)
 
             if process_llm.poll() is not None:
+                err_message = process_llm.stderr.read() if process_llm.stderr else 'N/A'
+                print(f"!!!CRITICAL!!! llm.py has STOPPED!!!RETURN INFORMATION:{err_message}")
                 app_logger.critical(f"process停止，with return code{process_llm.returncode}.restarting...")
-                process_llm = subprocess.Popen(['python', "llm.py"])
+                process_llm = subprocess.Popen(['python', "llm.py"], stderr=subprocess.PIPE , text=True)
             try:
                 if process_game.poll() is not None:
                     # print("game停止，游戏重置")
@@ -246,7 +248,7 @@ async def main():
                         app_logger.info(f"game start:\nplayer:{game_user}" )
                         with open("logs\\game.json", "w", encoding='utf-8') as f:
                             json.dump(game_list, f, ensure_ascii=False, indent=4)
-                        process_game = subprocess.Popen(['python', "game\\main.py"])
+                        process_game = subprocess.Popen(['python', "game\\main.py"],stderr= subprocess.PIPE ,text=True)
 
                     # 普通弹幕处理
                     else:

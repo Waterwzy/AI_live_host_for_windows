@@ -267,6 +267,8 @@ async def main():
                     now_messages_added = 0
                 except Exception as e:#额，我不到啊，出什么事了？
                     app_logger.error(f"返回任务结果时出现其他问题：{e}")
+                    current_task = None
+                    now_messages_added = 0
             #读取命令
             try:
                 with open("logs\\command.json",'r',encoding='utf-8') as f:

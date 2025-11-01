@@ -1,6 +1,7 @@
 import logging
 import os
 import logging.handlers
+import sys
 
 def setup_logger():
     logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ def setup_logger():
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
-    console_handler = logging.StreamHandler()
+    console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     console_handler.setLevel(logging.DEBUG)
 
