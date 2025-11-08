@@ -51,16 +51,19 @@ async def request_firefly(session,question):
             "messages":question,
             "stream":False,
             "headless":1,
+            "max_tokens":3000,
         }
     else :
+        nickname = question[-1]['content'][0]['text'][0 : question[-1]['content'][0]['text'].index(":") ]
         payload={
             "model":config['llm_config']['llm_model'],
             "messages":[question[-1]],
             "stream":False,
             "headless":0,
-            "nickname":"",
+            "nickname":nickname,
             "session_id":"streaming-firefly",
             "enable_memory":1,
+            "max_tokens":3000,
         }
     headers = {
         "Authorization":f"Bearer {config['llm_config']['llm_key']}",
@@ -237,10 +240,18 @@ async def main():
                         print("tokens used:" + str(tokens_used))
                         ans = ans['choices'][0]['message']
                         ansstr = ans['content']
+                        #message.append(ans)
+                        #write_text(message)
+                        try :
+                            index_fuck = ansstr.index(":")
+                            ansstr = ansstr[index_fuck + 1 : ]
+                        except ValueError:
+                            pass
+                        #ansstr = ansstr[len(config['llm_config']['llm_rolename']) + 1:] if ansstr.startswith(
+                                    #config['llm_config']['llm_rolename']) else ansstr#十分神人的格式筛选（如果开头有角色名就直接去掉，我管你这的那的）
+                        ans['content'] = ansstr
                         message.append(ans)
                         write_text(message)
-                        ansstr = ansstr[len(config['llm_config']['llm_rolename']) + 1:] if ansstr.startswith(
-                                    config['llm_config']['llm_rolename']) else ansstr#十分神人的格式筛选（如果开头有角色名就直接去掉，我管你这的那的）
                         print(ansstr)
                     if len(waiting_requests) :#缓冲队列的消息处理，这段只有上帝他老人家看得懂
                         message.append( waiting_requests[0]['request_content'] )

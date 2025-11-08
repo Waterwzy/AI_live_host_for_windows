@@ -10,6 +10,7 @@ from hashlib import sha256
 import proto
 import reading_config
 from logging_config import app_logger
+import aiohttp
 
 config=reading_config.read_config()
 
@@ -23,20 +24,21 @@ def add_raw(time,username,msg,cmd,admin) :
         json.dump(list_raw, f, ensure_ascii=False, indent=4)
 
 class BiliClient:
-    def __init__(self, idCode, appId, key, secret, host):
+    def __init__(self, idCode, appId, key, secret, host,session):
         self.idCode = idCode
         self.appId = appId
         self.key = key
         self.secret = secret
         self.host = host
         self.gameId = ''
+        self.session = session
         pass
 
     # 事件循环
-    def run(self):
-        loop = asyncio.get_event_loop()
+    async def run_async(self):
+
         # 建立连接
-        websocket = loop.run_until_complete(self.connect())
+        websocket = await self.connect()
         tasks = [
             # 读取信息
             asyncio.ensure_future(self.recvLoop(websocket)),
@@ -45,7 +47,7 @@ class BiliClient:
              # 发送游戏心跳
             asyncio.ensure_future(self.appheartBeat()),
         ]
-        loop.run_until_complete(asyncio.gather(*tasks))
+        await asyncio.gather(*tasks)
 
     # http的签名
     def sign(self, params):
@@ -81,44 +83,67 @@ class BiliClient:
         return headerMap
 
     # 获取长连信息
-    def getWebsocketInfo(self):
+    async def getWebsocketInfo(self):
         postUrl = f"{self.host}/v2/app/start"
         params = json.dumps({"code": self.idCode, "app_id": self.appId})  # 使用 json.dumps 更安全
         headerMap = self.sign(params)
         try:
-            r = requests.post(postUrl, headers=headerMap, data=params, verify=False)
-            data = r.json()  # 直接使用 r.json() 替代 json.loads(r.content)
-            #print(data)
-            #print("114514")
 
-            # 校验 API 响应状态码
-            if data.get('code') != 0:
-                raise ValueError(f"API Error: {data.get('message')} (code={data.get('code')})")
+            # 使用 self.session (aiohttp) 发送异步请求
+            async with self.session.post(
+                postUrl, 
+                headers=headerMap, 
+                data=params, 
+                verify_ssl=False # 对应 requests 里的 verify=False
+            ) as response:
+                
+                if response.status != 200:
+                    raise Exception(f"HTTP error: {response.status}")
+                    
+                data = await response.json() # <--- 异步解析 JSON
 
-            # 安全访问嵌套字段
-            data_body = data.get('data', {})
-            self.gameId = str(data_body.get('game_info', {}).get('game_id', ''))
+                # 校验 API 响应状态码
+                if data.get('code') != 0:
+                    raise ValueError(f"API Error: {data.get('message')} (code={data.get('code')})")
 
-            websocket_info = data_body.get('websocket_info', {})
-            wss_links = websocket_info.get('wss_link', [])
-            auth_body = websocket_info.get('auth_body', '')
+                # 安全访问嵌套字段
+                data_body = data.get('data', {})
+                self.gameId = str(data_body.get('game_info', {}).get('game_id', ''))
 
-            if not wss_links:
-                raise ValueError("未获取到 WebSocket 地址")
-            return wss_links[0], auth_body
+                websocket_info = data_body.get('websocket_info', {})
+                wss_links = websocket_info.get('wss_link', [])
+                auth_body = websocket_info.get('auth_body', '')
+
+                if not wss_links:
+                    raise ValueError("未获取到 WebSocket 地址")
+                return wss_links[0], auth_body
         except Exception as e:
             app_logger.error(f"获取 WebSocket 信息失败: {e}")
             raise
     async def appheartBeat(self):
         while True:
-            await asyncio.ensure_future(asyncio.sleep(20))
+            await asyncio.sleep(20)
             postUrl = "%s/v2/app/heartbeat" % self.host
             params = '{"game_id":"%s"}' % (self.gameId)
             headerMap = self.sign(params)
-            r = requests.post(url=postUrl, headers=headerMap,
-                          data=params, verify=False)
-            data = json.loads(r.content)
-            app_logger.info("[BiliClient] send appheartBeat success")
+            try:
+                # 使用 self.session (aiohttp) 发送异步请求
+                async with self.session.post(
+                    url=postUrl, 
+                    headers=headerMap,
+                    data=params, 
+                    verify_ssl=False
+                ) as response:
+                    # 确保等待响应的 JSON 解析
+                    data = await response.json() 
+                    
+                    if response.status == 200 and data.get('code') == 0:
+                        app_logger.info("[BiliClient] send appheartBeat success")
+                    else:
+                        app_logger.warning(f"[BiliClient] appheartBeat failed. Status: {response.status}, Code: {data.get('code', 'N/A')}")
+                        
+            except Exception as e:
+                app_logger.error(f"[BiliClient] appheartBeat encountered an error: {e}")
 
 
     # 发送鉴权信息
@@ -214,7 +239,7 @@ class BiliClient:
 
     # 建立连接
     async def connect(self):
-        addr, authBody = self.getWebsocketInfo()
+        addr, authBody = await self.getWebsocketInfo()
         #(addr, authBody)
         websocket = await websockets.connect(addr)
         # 鉴权
@@ -234,16 +259,27 @@ class BiliClient:
         app_logger.warning("[BiliClient] end app success"+ params)
 
 
-if __name__ == '__main__':
-
-    try:
+# 异步启动函数 (保持不变)
+async def start_client():
+    # 在最外层创建 aiohttp session，并传入 BiliClient
+    async with aiohttp.ClientSession() as session:
         cli = BiliClient(
-            idCode=config['bili_config']['bili_idcode'],  # 主播身份码
-            appId=config['bili_config']['bili_appid'],  # 应用id
-            key=config['bili_config']['bili_key'],  # access_key
-            secret=config['bili_config']['bili_key_secret'],  # access_key_secret
-            host="https://live-open.biliapi.com") # 开放平台 (线上环境)
-        with cli:
-            cli.run()
+            idCode=config['bili_config']['bili_idcode'],
+            appId=config['bili_config']['bili_appid'],
+            key=config['bili_config']['bili_key'],
+            secret=config['bili_config']['bili_key_secret'],
+            host="https://live-open.biliapi.com",
+            session=session # 传入异步 session
+        )
+        cli.__enter__() # 手动调用 enter 逻辑
+        try:
+            await cli.run_async() # 运行异步任务
+        finally:
+            cli.__exit__(None, None, None) # 确保退出时执行 app_end 逻辑
+
+if __name__ == '__main__':
+    try:
+        # 运行异步启动函数
+        asyncio.run(start_client())
     except Exception as e:
         print("err", e)

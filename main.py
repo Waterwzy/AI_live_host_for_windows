@@ -33,7 +33,8 @@ async def requestds(session, question):
                 if response.status == 200:
                     return await response.json()
                 else:
-                    raise Exception(f"HTTP error: {response.status}")
+                    error_data = await response.json()
+                    raise Exception(f"HTTP error: {response.status},return message:{error_data['message']}")
         except Exception as e:
             app_logger.error(f"filter error as {e} retrying...")
             retry += 1
