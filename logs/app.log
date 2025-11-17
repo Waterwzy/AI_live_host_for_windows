@@ -87,3 +87,12 @@ player:流萤之梦-official
 2025-09-19 22:29:03 -  INFO - [BiliClient] send heartBeat success
 2025-09-19 22:29:03 -  DEBUG - JSON 解析失败，原始内容: b'\x00\x00\x00\x01'
 2025-09-19 22:29:14 -  WARNING - [BiliClient] end app success{"game_id":"f499a999-ffa7-48b5-8f51-03b9d4b2ecfe","app_id":3548593272004622}
+2025-11-17 22:47:50 -  INFO - [BiliClient] enter
+2025-11-17 22:47:50 -  ERROR - 获取 WebSocket 信息失败: API Error: 应用无效 (code=4001)
+2025-11-17 22:47:50 -  INFO - llm.py starting...
+2025-11-17 22:47:51 -  WARNING - [BiliClient] end app success{"game_id":"","app_id":1145141919810}
+2025-11-17 22:47:51 -  CRITICAL - ws停止 with return code：0.restarting...
+2025-11-17 22:47:52 -  INFO - [BiliClient] enter
+2025-11-17 22:47:52 -  ERROR - 获取 WebSocket 信息失败: API Error: 应用无效 (code=4001)
+2025-11-17 22:47:53 -  WARNING - [BiliClient] end app success{"game_id":"","app_id":1145141919810}
+2025-11-17 22:47:53 -  CRITICAL - ws停止 with return code：0.restarting...
